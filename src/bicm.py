@@ -26,24 +26,30 @@ Usage:
     respectively.
 
     Initialize the Bipartite Configuration Model for the matrix <td> with
+
         $ cm = BiCM(bin_mat=td)
 
     To create the BiCM by solving the corresponding equation system, use
+
         $ cm.make_bicm()
 
     To get the Lambda motifs and save the corresponding p-values for the
     row-layer nodes in the folder "output", use
+
         $ cm.lambda_motifs(True, filename='p_values_True.csv', delim='\t')
 
     To get the Lambda motifs and save the corresponding p-values for the
     column-layer nodes in the folder "output", use
+
         $ cm.lambda_motifs(False, filename='p_values_False.csv', delim='\t')
 
     Note that the saving of the files requires the name of the main folder
     which contains the folder "src", which itself contains the file bicm.py.
     If the folder name is NOT the default "bicm", the function
     self.get_main_dir() has to be called as
+
         self.get_main_dir(main_dir_name=<main folder name>)
+
     in __init__(bin_mat).
 
 Parallel computation:
@@ -72,7 +78,6 @@ import os
 import scipy.optimize as opt
 import numpy as np
 from poibin.poibin import PoiBin
-#import src.aic_bic as aic
 
 
 class BiCM:
@@ -130,13 +135,13 @@ class BiCM:
         self.test_average_degrees()
 
 # ------------------------------------------------------------------------------
-# Solve system of coupled nonlinear equations &
-# get biadjacency matrix
+# Solve coupled nonlinear equations and get BiCM biadjacency matrix
 # ------------------------------------------------------------------------------
 
     def solve_equations(self, eq, jac):
         """Solve the system of nonlinear equations using scipy's root function.
         The solutions correspond to the Lagrange multipliers
+
             x_i = exp(-\theta_i).
 
         :param eq: system of equations f(x) = 0
@@ -151,7 +156,7 @@ class BiCM:
     def equations(self, xx):
         """Return an array with the equations of the system. Note that the
         equations for the row-nodes depend only on the x-values of the
-        column-nodes and vice versa.
+        column-nodes and vice versa, see reference mentioned in the header.
 
         :param xx: Lagrange multipliers which have to be solved
         :type xx: np.array
@@ -188,9 +193,11 @@ class BiCM:
 
     def get_biadjacency_matrix(self, xx):
         """ Calculate the biadjacency matrix of the solved system. The
-        biadjacency matrix describes the optimal average graph <G>^* with the
-        elements G_ij == average link probabilities
-            p_ij, p_ij = x_i * x_j / (1.0 + x_i * x_j),
+        biadjacency matrix describes the BiCM, i.e. the optimal average graph
+        <G>^* with the elements G_ij == average link probabilities p_ij,
+
+            p_ij = x_i * x_j / (1.0 + x_i * x_j),
+
         where x are the solutions of the equations solved above.
         Note that i and j are taken from opposite bipartite node sets and
         i != j.
@@ -257,8 +264,8 @@ class BiCM:
         :param bip_set: selects row-nodes (True) or column-nodes (False)
         :type bip_set: bool
         :param parallel: defines whether function should be run in parallel
-                        True = use parallel processing,
-                        False = don't use parallel processing
+            True = use parallel processing,
+            False = don't use parallel processing
         :type parallel: bool
         """
         pl2_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
@@ -270,11 +277,17 @@ class BiCM:
 
     @staticmethod
     def get_plambda_matrix(biad_mat, bip_set):
-        """Return the tensor P_{\Lambda} = P_ij^c, where i, j \in same
-        bipartite node set, i.e. both rows or column indices, and with input M
-        P_ij = [M_{ic_1} * M_{jc_1}, M_{ic_2} * M_{jc_2}, ...]
+        """Return the tensor
+
+            P_{\Lambda} = P_ij^c,
+
+        where i, j \in same bipartite node set, i.e. both row or column
+        indices, and with input
+
+            M P_ij = [M_{ic_1} * M_{jc_1}, M_{ic_2} * M_{jc_2}, ...]
+
         over all c in the opposite bipartite node set.
-        The input matrix M / biad_mat is a biadjacency matrix and bip_set
+        The input matrix M (biad_mat) is a biadjacency matrix and bip_set
         defines which bipartite node set should be considered.
 
         :param biad_mat: biadjacency matrix
@@ -329,21 +342,20 @@ class BiCM:
         :param nl2_mat: array containing the observations of Lambda motivs
         :type nl2_mat: np.array (square shaped, shape[0] == shape[1])
         :param parallel: if True, the calculation is executed in parallel. If
-                            False, only one process is started.
+                        False, only one process is started.
         :type parallel: bool
         :return pval_mat: np.array containing the p-values corresponding to the
-                            values in nl2_mat.
+                        values in nl2_mat.
 
         NB: only upper triangular part of output is  != 0 since the matrix is
-            symmetric by definition.
+        symmetric by definition.
         """
         n = nl2_mat.shape[0]
-        # sharable array:
+        # a sharable array must be used to make it accessible to all processes
         shared_array_base = multiprocessing.Array(ctypes.c_double, n * n)
         pval_mat = np.frombuffer(shared_array_base.get_obj())
         self.pval_mat = pval_mat.reshape(n, n)
-
-        # number of processes running in parallel has to be tested. 
+        # number of processes running in parallel has to be tested.
         # good guess is multiprocessing.cpu_count() +- 1
         if parallel:
             numprocs = multiprocessing.cpu_count() - 1
@@ -363,11 +375,9 @@ class BiCM:
         # start queues
         p_inqueue.start()
         p_outqueue.start()
-
         # start processes
         for p in ps:
             p.start()       # each process has an id, p.pid
-
         p_inqueue.join()
         for p in ps:
             p.join()

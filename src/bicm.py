@@ -90,7 +90,7 @@ class BiCM:
         """
         self.bin_mat = np.array(bin_mat)
         self.check_input_matrix_is_binary()
-        [self.num_countries, self.num_products] = self.bin_mat.shape
+        [self.num_rows, self.num_columns] = self.bin_mat.shape
         self.dseq = self.set_degree_seq()
         self.dim = self.dseq.size
         self.sol = None             # solution of the equation system
@@ -110,10 +110,10 @@ class BiCM:
     def set_degree_seq(self):
         """Set the degree sequence [degrees row-nodes, degrees column-nodes].
         """
-        dseq = np.empty(self.num_countries + self.num_products)
-        dseq[self.num_countries:] = np.squeeze(np.sum(self.bin_mat, axis=0))
-        dseq[:self.num_countries] = np.squeeze(np.sum(self.bin_mat, axis=1))
-        assert dseq.size == (self.num_countries + self.num_products)
+        dseq = np.empty(self.num_rows + self.num_columns)
+        dseq[self.num_rows:] = np.squeeze(np.sum(self.bin_mat, axis=0))
+        dseq[:self.num_rows] = np.squeeze(np.sum(self.bin_mat, axis=1))
+        assert dseq.size == (self.num_rows + self.num_columns)
         return dseq
 
     def make_bicm(self):
@@ -158,8 +158,8 @@ class BiCM:
         :return : np.array of equations = 0
         """
         eq = -self.dseq
-        for i in xrange(0, self.num_countries):
-            for j in xrange(self.num_countries, self.dim):
+        for i in xrange(0, self.num_rows):
+            for j in xrange(self.num_rows, self.dim):
                 dum = xx[i] * xx[j] / (1. + xx[i] * xx[j])
                 eq[i] += dum
                 eq[j] += dum
@@ -174,9 +174,9 @@ class BiCM:
         :return : np.ndarray Jacobian
         """
         jac = np.zeros((self.dim, self.dim))
-        for i in xrange(0, self.num_countries):
+        for i in xrange(0, self.num_rows):
             # df_c / df_c' = 0 for all c' != c
-            for j in xrange(self.num_countries, self.dim):
+            for j in xrange(self.num_rows, self.dim):
                 # df_c / dx_c != 0
                 xxi = xx[i] / (1.0 + xx[i] * xx[j]) ** 2
                 xxj = xx[j] / (1.0 + xx[i] * xx[j]) ** 2
@@ -190,7 +190,7 @@ class BiCM:
         """ Calculate the biadjacency matrix of the solved system. The
         biadjacency matrix describes the optimal average graph <G>^* with the
         elements G_ij == average link probabilities
-            p_ij, p_ij = x_i * x_j / (1.0 + x_i * x_j), 
+            p_ij, p_ij = x_i * x_j / (1.0 + x_i * x_j),
         where x are the solutions of the equations solved above.
         Note that i and j are taken from opposite bipartite node sets and
         i != j.
@@ -198,9 +198,9 @@ class BiCM:
         :param xx: Lagrande multipliers / solutions of the system
         :type xx: np.array
         """
-        mat = np.empty((self.num_countries, self.num_products))
-        xp = xx[range(self.num_countries, self.dim)]
-        for i in xrange(self.num_countries):
+        mat = np.empty((self.num_rows, self.num_columns))
+        xp = xx[range(self.num_rows, self.dim)]
+        for i in xrange(self.num_rows):
             mat[i, ] = xx[i] * xp / (1 + xx[i] * xp)
         if np.any(mat < 0):
             errmsg = 'Error in get_adjacency_block: probabilities < 0 in ' \
@@ -221,32 +221,30 @@ class BiCM:
         matrix. The node degrees should be equal to the input sequence
         self.dseq.
         """
-        ave_deg_products = np.squeeze(np.sum(self.adj_matrix, axis=0))
-        ave_deg_countries = np.squeeze(np.sum(self.adj_matrix, axis=1))
+        ave_deg_columns = np.squeeze(np.sum(self.adj_matrix, axis=0))
+        ave_deg_rows = np.squeeze(np.sum(self.adj_matrix, axis=1))
         eps = 1./10  # error margin
-        # print '+++Test degrees of solution...'
         c_derr = np.where(np.logical_or(
             # average degree too small:
-            ave_deg_countries + eps < self.dseq[:self.num_countries],
-            # average degree too big:
-            ave_deg_countries - eps > self.dseq[:self.num_countries]))
+            ave_deg_rows + eps < self.dseq[:self.num_rows],
+            # average degree too large:
+            ave_deg_rows - eps > self.dseq[:self.num_rows]))
         p_derr = np.where(np.logical_or(
-            ave_deg_products + eps < self.dseq[self.num_countries:],
-            ave_deg_products - eps > self.dseq[self.num_countries:]))
+            ave_deg_columns + eps < self.dseq[self.num_rows:],
+            ave_deg_columns - eps > self.dseq[self.num_rows:]))
         # Check row-nodes degrees:
         if not np.array_equiv(c_derr, np.array([])):
             print '...inaccurate row-nodes degrees:'
             for i in c_derr[0]:
-                print 'Country', i, ':',
-                print 'input:', self.dseq[i], 'average:', ave_deg_countries[i]
+                print 'Row-node ', i, ':',
+                print 'input:', self.dseq[i], 'average:', ave_deg_rows[i]
         # Check column-nodes degrees:
         if not np.array_equiv(p_derr, np.array([])):
             print '...inaccurate column-nodes degrees:'
             for i in c_derr[0]:
-                print 'Product', i, ':',
-                print 'input:', self.dseq[i + self.num_countries], \
-                    'average:', ave_deg_products[i]
-        # print 'Done.'
+                print 'Column-node ', i, ':',
+                print 'input:', self.dseq[i + self.num_rows], \
+                    'average:', ave_deg_columns[i]
 
 # ------------------------------------------------------------------------------
 # Lambda motifs
@@ -254,10 +252,9 @@ class BiCM:
 
     def lambda_motifs(self, bip_set, parallel=True, filename=None, delim='\t'):
         """Obtain and save the p-values of the Lambda motifs observed in the
-        binary inpu matrix for the node set defined by bip_set.
+        binary input matrix for the node set defined by bip_set.
 
-        :param bip_set: selects countries (True, fix rows) or
-                        products (False, fix columns)
+        :param bip_set: selects row-nodes (True) or column-nodes (False)
         :type bip_set: bool
         :param parallel: defines whether function should be run in parallel
                         True = use parallel processing,
@@ -282,8 +279,7 @@ class BiCM:
 
         :param biad_mat: biadjacency matrix
         :type biad_mat: np.array
-        :param bip_set: selects countries (True, fix rows) or
-                        products (False, fix columns)
+        :param bip_set: selects row-nodes (True) or column-nodes (False)
         :type bip_set: bool
         """
         if (type(bip_set) == bool) and bip_set:
@@ -296,8 +292,7 @@ class BiCM:
         pl2 = np.empty((mm_mat.shape[0], mm_mat.shape[0], mm_mat.shape[1]))
         for i in xrange(mm_mat.shape[0]):
             pl2[i, ] = mm_mat[i, ] * mm_mat
-        # set diagonal to zero
-        di = np.diag_indices(pl2.shape[0], 2)
+        di = np.diag_indices(pl2.shape[0], 2)       # set diagonal to zero
         pl2[di] = 0
         return pl2
 
@@ -308,8 +303,7 @@ class BiCM:
 
         :param mm: binary matrix (rectangular / square shaped)
         :type mm: np.array
-        :param bip_set: selects countries (True, fix rows) or
-                        products (False, fix columns)
+        :param bip_set: selects row-nodes (True) or column-nodes (False)
         :type bip_set: bool
 
         :return nl2_mat: square matrix of observed Lambda motifs
@@ -349,8 +343,8 @@ class BiCM:
         pval_mat = np.frombuffer(shared_array_base.get_obj())
         self.pval_mat = pval_mat.reshape(n, n)
 
-        # metti qua il numero di core multiprocessing.cpu_count()
-        # oppure +- qualche numero. deve essere testato
+        # number of processes running in parallel has to be tested. 
+        # good guess is multiprocessing.cpu_count() +- 1
         if parallel:
             numprocs = multiprocessing.cpu_count() - 1
         elif not parallel:
@@ -366,20 +360,18 @@ class BiCM:
                                              args=(numprocs, ))
         ps = [multiprocessing.Process(target=self.pval_process_worker,
                                       args=()) for i in range(numprocs)]
+        # start queues
         p_inqueue.start()
         p_outqueue.start()
 
-        # print '...starting processes:'
+        # start processes
         for p in ps:
-            p.start()
-            # print '......PID:', p.pid
-        # print 'Processes started.'
+            p.start()       # each process has an id, p.pid
 
         p_inqueue.join()
         for p in ps:
             p.join()
         p_outqueue.join()
-        # print 'Processes done.'
 
     def add2inqueue(self, nprocs, pl2_mat, nl2_mat):
         """Add matrix entries to in-queue in order to calculate p-values."""

@@ -1,0 +1,168 @@
+Test file for the module itn_bicm
+================================================================================
+
+Created on Tue Apr 4, 2016
+
+Author:
+    Mika Straka
+
+Description:
+    This file contains the doctest test cases for the functions and methods
+    defined in itn_bicm
+
+Usage:
+    To run the test, execute
+        $ python -m doctest bicm_tests.txt
+    in the command line. If you want to run the tests in verbose mode, use
+        $ python -m doctest -v bicm_tests.txt
+
+    Note that itn_bicm.py and bicm_tests.txt have to be in the same directory.
+
+################################################################################
+# Tests
+################################################################################
+
+    >>> import numpy as np
+    >>> from bicm import BiCM
+
+# BiCM.make_bicm() -------------------------------------------------------------
+
+    >>> td = np.array([[1, 0], [1, 1], [1, 1]])
+    >>> cm = BiCM(td)
+    >>> cm.make_bicm()
+    >>> np.around(cm.adj_matrix, decimals=1)
+    array([[ 1.,  0.],
+           [ 1.,  1.],
+           [ 1.,  1.]])
+
+    >>> td = np.array([[1, 0], [0, 1]])
+    >>> cm = BiCM(td)
+    >>> cm.make_bicm()
+    >>> np.around(cm.adj_matrix, decimals=1)
+    array([[ 0.5,  0.5],
+           [ 0.5,  0.5]])
+    >>> td = np.array([[1, 1, 0, 0], [0, 0, 1, 1]])
+    >>> cm = BiCM(td)
+    >>> cm.make_bicm()
+    >>> np.around(cm.adj_matrix, decimals=2)
+    array([[ 0.5,  0.5,  0.5,  0.5],
+           [ 0.5,  0.5,  0.5,  0.5]])
+
+# BiCM.solve_equations ---------------------------------------------------------
+
+    >>> cm = BiCM(np.array([[1, 0, 1], [1, 1, 1]]))
+    >>> sol = cm.solve_equations(cm.equations, cm.jacobian)
+    >>> np.around(cm.get_biadjacency_matrix(sol.x), decimals=1)
+    array([[ 1.,  0.,  1.],
+           [ 1.,  1.,  1.]])
+
+# BiCM.equation ----------------------------------------------------------------
+
+    Test equations:
+    >>> cm = BiCM(np.array([[1, 0, 1], [1, 1, 1]]))
+    >>> cm.equations((np.array([0.1, 0.2, 0.4, 0.5, 0.8])))
+    array([-1.83984534, -2.6970858 , -1.88746439, -0.86147186, -1.78799489])
+
+# BiCM.jacobian ----------------------------------------------------------------
+
+    Test Jacobian:
+    >>> cm = BiCM(np.array([[1, 0, 1], [1, 1, 1]]))
+    >>> np.around(cm.jacobian((np.array([0.1, 0.2, 0.4, 0.5, 0.8]))),
+    ... decimals=2)
+    array([[ 1.51,  0.  ,  0.09,  0.09,  0.09],
+           [ 0.  ,  1.35,  0.17,  0.17,  0.15],
+           [ 0.37,  0.34,  0.26,  0.  ,  0.  ],
+           [ 0.45,  0.41,  0.  ,  0.26,  0.  ],
+           [ 0.69,  0.59,  0.  ,  0.  ,  0.23]])
+
+# BiCM.get_biadjacency_matrix --------------------------------------------------
+
+    >>> cm = BiCM(np.array([[1, 0, 1], [1, 1, 1]]))
+    >>> cm.get_biadjacency_matrix((np.array([0.1, 0.2, 0.4, 0.5, 0.8])))
+    array([[ 0.03846154,  0.04761905,  0.07407407],
+           [ 0.07407407,  0.09090909,  0.13793103]])
+
+# BiCM.get_plambda_matrix -----------------------------------------------------
+
+    Test the function:
+    >>> binmat = np.array([[1, 0], [1, 1]])
+    >>> bb = BiCM(binmat)
+    >>> bip_prob_mat = np.array([[0.1, 0.5, 1], [0.1, 0.1, 0.5]])
+
+    Test error message:
+    >>> bb.get_plambda_matrix(bip_prob_mat, None)
+    Traceback (most recent call last):
+    ...
+    NameError: 'None' not supported.
+
+    Lambda motif probabilities for the two countries (rows):
+    >>> bb.get_plambda_matrix(bip_prob_mat, True)
+    array([[[ 0.  ,  0.  ,  0.  ],
+            [ 0.01,  0.05,  0.5 ]],
+    <BLANKLINE>
+           [[ 0.01,  0.05,  0.5 ],
+            [ 0.  ,  0.  ,  0.  ]]])
+
+    Lambda motif probabilities for the products (columns):
+    >>> bb.get_plambda_matrix(bip_prob_mat, False)
+    array([[[ 0.  ,  0.  ],
+            [ 0.05,  0.01],
+            [ 0.1 ,  0.05]],
+    <BLANKLINE>
+           [[ 0.05,  0.01],
+            [ 0.  ,  0.  ],
+            [ 0.5 ,  0.05]],
+    <BLANKLINE>
+           [[ 0.1 ,  0.05],
+            [ 0.5 ,  0.05],
+            [ 0.  ,  0.  ]]])
+
+# BiCM.get_lambda_motif_matrix ------------------------------------------------
+
+    >>> binmat = np.array([[1, 1, 0], [1, 1, 1]])
+    >>> bb = BiCM(binmat)
+
+    Test error message:
+    >>> bb.get_lambda_motif_matrix(binmat, None)
+    Traceback (most recent call last):
+    ...
+    NameError: 'None' not supported.
+
+    Lambda motifs of countries:
+    >>> bb.get_lambda_motif_matrix(binmat, True)
+    array([[0, 2],
+           [2, 0]])
+
+    Lambda motifs of products:
+    >>> bb.get_lambda_motif_matrix(binmat, False)
+    array([[0, 2, 1],
+           [2, 0, 1],
+           [1, 1, 0]])
+
+# BiCM.get_pvalues -------------------------------------------------------------
+
+    >>> binmat = np.array([[1, 0], [1, 1]]); bb = BiCM(binmat)
+    >>> p = [0.5, 1.0]; pl2m = np.array([[[0, 0], p], [p, [0, 0]]])
+    >>> nl2m = np.array([[0, 1], [1, 0]])
+    >>> bb.get_pvalues_q(pl2m, nl2m, parallel=False)
+    >>> bb.pval_mat
+    array([[ 0.,  1.],
+           [ 0.,  0.]])
+
+    >>> p = [0.1, 0.5, 0.7]
+    >>> pl2m = np.array([[p, p, p], [p, p, p], [p, p, p]])
+    >>> nl2m = np.array([[0, 2, 1], [2, 0, 1], [1, 1, 0]])
+    >>> bb.get_pvalues_q(pl2m, nl2m, parallel=False)
+    >>> bb.pval_mat
+    array([[ 0.   ,  0.4  ,  0.865],
+           [ 0.   ,  0.   ,  0.865],
+           [ 0.   ,  0.   ,  0.   ]])
+
+    Check that seqential and parallel processing obtain the same results:
+    >> binmat = np.array([[1, 0], [1, 1]]); bb = BiCM(binmat)
+    >> p = [0.5, 1.0]; pl2m = np.array([[[0, 0], p], [p, [0, 0]]])
+    >> nl2m = np.array([[0, 1], [1, 0]])
+    >> pv_sequential = bb.get_pvalues(pl2m, nl2m, parallel=False)
+    >> pv_parallel = bb.get_pvalues(pl2m, nl2m, parallel=True)
+    >> np.all(pv_sequential == pv_parallel)
+    True

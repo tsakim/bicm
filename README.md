@@ -18,6 +18,10 @@ described by Saracco et al. \[1\].
 ## Author 
 Mika Straka
 
+### This Version
+The newest version can be found on
+[https://github.com/tsakim/poibin](https://github.com/tsakim/poibin).
+
 ## Dependencies
 * [ctypes](https://docs.python.org/2/library/ctypes.html)
 * [multiprocessing](https://docs.python.org/2/library/multiprocessing.html)

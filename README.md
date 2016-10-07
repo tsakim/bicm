@@ -110,4 +110,4 @@ the case of the World Trade Web](http://www.nature.com/articles/srep10595)
 patterns in real networks](http://iopscience.iop.org/article/10.1088/1367-2630/13/8/083001)
 
 ---
-Copyright (C) 2015-2016 Mika Straka 
+Copyright (c) 2015-2016 Mika J. Straka 

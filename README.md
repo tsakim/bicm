@@ -6,7 +6,7 @@ Model (BiCM), which can be used as a statistical null model for undirected and
 binary bipartite networks (see reference \[1, 2\]).
 
 Given the biadjacency matrix of a bipartite network, the corresponding ensemble
-average graph is calcutated and expressed in the form of its biadjacency
+average graph is calculated and expressed in the form of its biadjacency
 matrix, where each matrix entry corresponds to the link probability between two
 nodes in the two distinct layers.
 

@@ -13,7 +13,7 @@ Description:
     undirected bipartite networks, see reference below.
 
     Given a biadjacency matrix of a bipartite graph in the form of a binary
-    array with rectangular shape as input, the module calulates the biadjacency
+    array with rectangular shape as input, the module calculates the biadjacency
     matrix for the corresponding ensemble average graph <G>^*, where the matrix
     entries correspond to the link probabilities <G>^*_ij = p_ij between nodes
     of the two distinct bipartite node sets.
@@ -33,28 +33,32 @@ Usage:
 
         $ cm.make_bicm()
 
-    To get the Lambda motifs and save the corresponding p-values for the
-    row-layer nodes in the folder "output", use
+    The biadjacency matrix of the BiCM null model can be saved in the folder
+    "bicm/output/" as
+
+        $ cm.save_matrix(cm.adj_matrix, filename=<filename>, delim='\t')
+
+    In order to analyze similarity of the row-layer nodes and to save the
+    p-values of the corresponding Lambda-motifs in the folder "bicm/output/", use
 
         $ cm.lambda_motifs(True, filename='p_values_True.csv', delim='\t')
 
-    To get the Lambda motifs and save the corresponding p-values for the
-    column-layer nodes in the folder "output", use
+    For the column-layer nodes, use
 
         $ cm.lambda_motifs(False, filename='p_values_False.csv', delim='\t')
 
-    Note that the saving of the files requires the name of the main folder
-    which contains the folder "src", which itself contains the file bicm.py.
-    If the folder name is NOT the default "bicm", the function
-    self.get_main_dir() has to be called as
+NB Main folder
+    Note that saving the files requires the name of the main directory
+    which contains the folder "src" and itself contains the file bicm.py.
+    If the folder name is NOT the default "bicm", the BiCM instance has to be
+    initialized as
 
-        self.get_main_dir(main_dir_name=<main folder name>)
+        $ cm = BiCM(bin_mat=td, main_dir=<main directory name>)
 
-    in __init__(bin_mat).
 
 Parallel computation:
-    The module uses the Python multiprocessing package and the calculation of
-    the p-values is executed in parallel. The number of parallel processes
+    The module uses the Python multiprocessing package in order to execute the
+    calculation of the p-values in parallel. The number of parallel processes
     depends on the number of CPUs of the work station, see variable "numprocs"
     in method "self.get_pvalues_q".
     If the calculation should not be performed in parallel, use
@@ -268,9 +272,9 @@ class BiCM:
             False = don't use parallel processing
         :type parallel: bool
         """
-        pl2_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
-        nl2_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
-        self.get_pvalues_q(pl2_mat, nl2_mat, parallel)
+        plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
+        nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
+        self.get_pvalues_q(plam_mat, nlam_mat, parallel)
         if filename is None:
             fname = 'p_values_' + str(bip_set) + '.csv'
         self.save_matrix(self.pval_mat, filename=fname, delim=delim)
@@ -319,38 +323,38 @@ class BiCM:
         :param bip_set: selects row-nodes (True) or column-nodes (False)
         :type bip_set: bool
 
-        :return nl2_mat: square matrix of observed Lambda motifs
+        :return nlam_mat: square matrix of observed Lambda motifs
         """
         if (type(bip_set) == bool) and bip_set:
-            nl2_mat = np.dot(mm, np.transpose(mm))
+            nlam_mat = np.dot(mm, np.transpose(mm))
         elif (type(bip_set) == bool) and not bip_set:
-            nl2_mat = np.dot(np.transpose(mm), mm)
+            nlam_mat = np.dot(np.transpose(mm), mm)
         else:
             errmsg = "'" + str(bip_set) + "' " + 'not supported.'
             raise NameError(errmsg)
-        di = np.diag_indices(nl2_mat.shape[0], 2)
-        nl2_mat[di] = 0
-        return nl2_mat
+        di = np.diag_indices(nlam_mat.shape[0], 2)
+        nlam_mat[di] = 0
+        return nlam_mat
 
-    def get_pvalues_q(self, pl2_mat, nl2_mat, parallel=True):
+    def get_pvalues_q(self, plam_mat, nlam_mat, parallel=True):
         """Apply the Poisson Binomial distribution on the values given in
-        nl2_mat using the probabilities in pl2_mat.
+        nlam_mat using the probabilities in plam_mat.
 
-        :param pl2_mat: array containing the list of probabilities for the
+        :param plam_mat: array containing the list of probabilities for the
                         single observations of Lambda motifs
-        :type pl2_mat: np.array (square shaped, shape[0] == shape[1])
-        :param nl2_mat: array containing the observations of Lambda motivs
-        :type nl2_mat: np.array (square shaped, shape[0] == shape[1])
+        :type plam_mat: np.array (square shaped, shape[0] == shape[1])
+        :param nlam_mat: array containing the observations of Lambda motifs
+        :type nlam_mat: np.array (square shaped, shape[0] == shape[1])
         :param parallel: if True, the calculation is executed in parallel. If
                         False, only one process is started.
         :type parallel: bool
         :return pval_mat: np.array containing the p-values corresponding to the
-                        values in nl2_mat.
+                        values in nlam_mat.
 
         NB: only upper triangular part of output is  != 0 since the matrix is
         symmetric by definition.
         """
-        n = nl2_mat.shape[0]
+        n = nlam_mat.shape[0]
         # the array must be sharable to be accessible by all processes
         shared_array_base = multiprocessing.Array(ctypes.c_double, n * n)
         pval_mat = np.frombuffer(shared_array_base.get_obj())
@@ -367,7 +371,7 @@ class BiCM:
         self.output_queue = multiprocessing.Queue()
 
         p_inqueue = multiprocessing.Process(target=self.add2inqueue,
-                                            args=(numprocs, pl2_mat, nl2_mat))
+                                            args=(numprocs, plam_mat, nlam_mat))
         p_outqueue = multiprocessing.Process(target=self.outqueue2pval_mat,
                                              args=(numprocs, ))
         ps = [multiprocessing.Process(target=self.pval_process_worker,
@@ -383,13 +387,13 @@ class BiCM:
             p.join()
         p_outqueue.join()
 
-    def add2inqueue(self, nprocs, pl2_mat, nl2_mat):
+    def add2inqueue(self, nprocs, plam_mat, nlam_mat):
         """Add matrix entries to in-queue in order to calculate p-values."""
-        n = pl2_mat.shape[0]
+        n = plam_mat.shape[0]
         # add tuples of matrix elements and indices to the input queue
         for i in xrange(n):
             for j in xrange(i + 1, n):
-                self.input_queue.put((i, j, pl2_mat[i, j], nl2_mat[i, j]))
+                self.input_queue.put((i, j, plam_mat[i, j], nlam_mat[i, j]))
         # add as many poison pills "STOP" to the queue as there are workers
         for i in xrange(nprocs):
                 self.input_queue.put("STOP")

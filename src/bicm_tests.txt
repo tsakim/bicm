@@ -142,17 +142,17 @@ Usage:
 # BiCM.get_pvalues -------------------------------------------------------------
 
     >>> binmat = np.array([[1, 0], [1, 1]]); bb = BiCM(binmat)
-    >>> p = [0.5, 1.0]; pl2m = np.array([[[0, 0], p], [p, [0, 0]]])
-    >>> nl2m = np.array([[0, 1], [1, 0]])
-    >>> bb.get_pvalues_q(pl2m, nl2m, parallel=False)
+    >>> p = [0.5, 1.0]; plambm = np.array([[[0, 0], p], [p, [0, 0]]])
+    >>> nlambm = np.array([[0, 1], [1, 0]])
+    >>> bb.get_pvalues_q(plambm, nlambm, parallel=False)
     >>> bb.pval_mat
     array([[ 0.,  1.],
            [ 0.,  0.]])
 
     >>> p = [0.1, 0.5, 0.7]
-    >>> pl2m = np.array([[p, p, p], [p, p, p], [p, p, p]])
-    >>> nl2m = np.array([[0, 2, 1], [2, 0, 1], [1, 1, 0]])
-    >>> bb.get_pvalues_q(pl2m, nl2m, parallel=False)
+    >>> plambm = np.array([[p, p, p], [p, p, p], [p, p, p]])
+    >>> nlambm = np.array([[0, 2, 1], [2, 0, 1], [1, 1, 0]])
+    >>> bb.get_pvalues_q(plambm, nlambm, parallel=False)
     >>> bb.pval_mat
     array([[ 0.   ,  0.4  ,  0.865],
            [ 0.   ,  0.   ,  0.865],
@@ -160,9 +160,9 @@ Usage:
 
     Check that seqential and parallel processing obtain the same results:
     >> binmat = np.array([[1, 0], [1, 1]]); bb = BiCM(binmat)
-    >> p = [0.5, 1.0]; pl2m = np.array([[[0, 0], p], [p, [0, 0]]])
-    >> nl2m = np.array([[0, 1], [1, 0]])
-    >> pv_sequential = bb.get_pvalues(pl2m, nl2m, parallel=False)
-    >> pv_parallel = bb.get_pvalues(pl2m, nl2m, parallel=True)
+    >> p = [0.5, 1.0]; plambm = np.array([[[0, 0], p], [p, [0, 0]]])
+    >> nlambm = np.array([[0, 1], [1, 0]])
+    >> pv_sequential = bb.get_pvalues(plambm, nlambm, parallel=False)
+    >> pv_parallel = bb.get_pvalues(plambm, nlambm, parallel=True)
     >> np.all(pv_sequential == pv_parallel)
     True

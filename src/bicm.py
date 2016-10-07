@@ -85,7 +85,7 @@ class BiCM:
     analyze the Lambda motifs.
     """
 
-    def __init__(self, bin_mat):
+    def __init__(self, bin_mat, main_dir='bicm'):
         """Initialize the parameters of the BiCM.
 
         :param bin_mat: binary input matrix describing the biadjacency matrix
@@ -103,7 +103,7 @@ class BiCM:
         self.pval_mat = None        # matrix containing the resulting p-values
         self.input_queue = None     # queue for parallel processing
         self.output_queue = None    # queue for parallel processing
-        self.main_dir = self.get_main_dir()
+        self.main_dir = self.get_main_dir(main_dir)
 
     def check_input_matrix_is_binary(self):
         """Check that the input matrix is binary, i.e. entries are either
@@ -273,7 +273,7 @@ class BiCM:
         self.get_pvalues_q(pl2_mat, nl2_mat, parallel)
         if filename is None:
             fname = 'p_values_' + str(bip_set) + '.csv'
-        self.save_pvalues(self.pval_mat, filename=fname, delim=delim)
+        self.save_matrix(self.pval_mat, filename=fname, delim=delim)
 
     @staticmethod
     def get_plambda_matrix(biad_mat, bip_set):
@@ -436,15 +436,15 @@ class BiCM:
         dirpath = s[:s.index(main_dir_name) + len(main_dir_name) + 1]
         return dirpath
 
-    def save_pvalues(self, pval_mat, filename, delim='\t'):
-        """Save the p-values matrix in a csv-file.
+    def save_matrix(self, mat, filename, delim='\t'):
+        """Save the input matrix in a csv-file.
 
-        :param pval_mat: matrix containing the p-values
-        :param filename: name of the file for the p-value
+        :param mat: two-dimensional matrix
+        :param filename: name of the output file
         :param delim: delimiter between values in file.
         """
         fname = ''.join([self.main_dir, '/output/', filename])
-        np.savetxt(fname, pval_mat, delimiter=delim)
+        np.savetxt(fname, mat, delimiter=delim)
 
 ################################################################################
 # Main

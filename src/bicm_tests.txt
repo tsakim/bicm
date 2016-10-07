@@ -8,7 +8,7 @@ Author:
 
 Description:
     This file contains the doctest test cases for the functions and methods
-    defined in itn_bicm
+    defined in bicm.py.
 
 Usage:
     To run the test, execute
@@ -16,7 +16,7 @@ Usage:
     in the command line. If you want to run the tests in verbose mode, use
         $ python -m doctest -v bicm_tests.txt
 
-    Note that itn_bicm.py and bicm_tests.txt have to be in the same directory.
+    Note that bicm.py and bicm_tests.txt have to be in the same directory.
 
 ################################################################################
 # Tests

@@ -351,7 +351,7 @@ class BiCM:
         symmetric by definition.
         """
         n = nl2_mat.shape[0]
-        # a sharable array must be used to make it accessible to all processes
+        # the array must be sharable to be accessible by all processes
         shared_array_base = multiprocessing.Array(ctypes.c_double, n * n)
         pval_mat = np.frombuffer(shared_array_base.get_obj())
         self.pval_mat = pval_mat.reshape(n, n)

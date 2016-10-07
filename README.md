@@ -1,4 +1,4 @@
-# Bipartite Configuration Model
+# Bipartite Configuration Model for Python
 
 ## About
 The module contains a Python implementation of the Bipartite Configuration
@@ -12,7 +12,7 @@ nodes in the two distinct layers.
 
 To address the question of node similarity within one bipartite layer, it is
 possible to perform a statistical validation of the number of common nearest
-neighbors and to calculate the p-values of the correspective Lambda-motifs, as
+neighbors and to calculate the p-values of the corresponding Lambda-motifs, as
 described by Saracco et al. \[1\].
  
 ## Author 
@@ -27,15 +27,15 @@ Mika Straka
 * [poibin](https://github.com/tsakim/poibin) Module for the Poisson Binomial probability distribution 
 
 ## Usage
-Be `input_mat` a two-dimensional binary numpy array describing the biadjacency matrix
-of an undirected bipartite network. The nodes of the two distinct bipartite
-layers are ordered along the columns and rows, respectively. In the algorithm, 
-the two layers are identified by the boolean values `True` for the row-nodes
-and `False` for the column-nodes.
+Be `input_mat` a two-dimensional binary numpy array describing the biadjacency
+matrix of an undirected bipartite network. The nodes of the two distinct
+bipartite layers are ordered along the columns and rows, respectively. In the
+algorithm, the two layers are identified by the boolean values `True` for the
+row-nodes and `False` for the column-nodes.
 
 Import the module
 ```python
-from bicm import BiCM
+from src.bicm import BiCM
 ```
 and initialize the Bipartite Configuration Model for the matrix `input_mat` with
 ```python
@@ -50,16 +50,15 @@ The biadjacency matrix of the BiCM null model can be saved in the folder
 ```python
 cm.save_matrix(cm.adj_matrix, filename=<filename>, delim='\t')
 ```
-where `<filename>` should end with, e.g., `.csv` and the delimiter `delim`
+where `<filename>` should end with, e.g., `.csv`. The delimiter `delim`
 can be freely chosen with the default value being `\t`.
 
-In order to analyze the Lambda-motifs and save the corresponding p-values for
-the row-layer nodes in the folder `bicm/output/`, use
+In order to analyze similarity of the row-layer nodes and to save the p-values
+of the corresponding Lambda-motifs in the folder `bicm/output/`, use 
 ```python
 cm.lambda_motifs(True, filename='p_values_True.csv', delim='\t')
 ```
-To get the Lambda motifs and save the corresponding p-values for the
-column-layer nodes in the folder `bicm/output/`, use 
+For the column-layer nodes, use
 ```python
 cm.lambda_motifs(False, filename='p_values_False.csv', delim='\t')
 ```
@@ -67,7 +66,8 @@ cm.lambda_motifs(False, filename='p_values_False.csv', delim='\t')
 ### NB: Main folder
 Note that saving the files requires the name of the main directory,
 which contains the folder `src` and thus the file `src/bicm.py`.
-If the folder name is *not* the default `bicm`, the BiCM instance has to be initialized as
+If the name of the main directory is *not* the default `bicm`, the BiCM
+instance has to be initialized as 
 ```python
 cm = BiCM(bin_mat=input_mat, main_dir=<main directory>)
 ```
@@ -79,11 +79,11 @@ depends on the number of CPUs of the work station (see variable "numprocs" in
 the method `BiCM.get_pvalues_q`). 
 If the calculation should not be performed in parallel, use
 ```python
-$ cm.lambda_motifs(True, parallel=False)
+cm.lambda_motifs(True, parallel=False)
 ```
 and respectively
 ```python
-$ cm.lambda_motifs(False, parallel=False)
+cm.lambda_motifs(False, parallel=False)
 ```
 
 ## Testing
@@ -92,12 +92,12 @@ execute
 ```
 $ python -m doctest bicm_tests.txt
 ```
-in the command line. If you want to run the tests in verbose mode, use
+in the folder `src` in the command line. If you want to run the tests in
+verbose mode, use 
 ```
 $ python -m doctest -v bicm_tests.txt
 ```
-in the folder `src`. Note that `bicm.py` and `bicm_tests.txt` have to be in the
-same directory.
+Note that `bicm.py` and `bicm_tests.txt` have to be in the same directory.
 
 ## References
 * \[1\] [Saracco, Di Clemente, Gabrielli, Squartini - Randomizing bipartite networks:

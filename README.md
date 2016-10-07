@@ -3,14 +3,16 @@
 ## About
 The module contains a Python implementation of the Bipartite Configuration
 Model (BiCM), which can be used as a statistical null model for undirected and
-binary bipartite networks (see reference below).
+binary bipartite networks (see reference \[1, 2\]).
 
 Given the biadjacency matrix of a bipartite network, the corresponding ensemble
 average graph is calcutated and expressed in the form of its biadjacency
 matrix, where each matrix entry corresponds to the link probability between the
 respective nodes.
 
-Furthermore, it is possible to perform a statistical validation of the node similarities in terms of $\Lambda$-motifs, as described by Saracco et al.
+Furthermore, it is possible to perform a statistical validation of the node
+similarities in terms of $\Lambda$-motifs, as described by Saracco et al.
+\[1\].
  
 ## Author 
 Mika Straka
@@ -20,7 +22,7 @@ Mika Straka
 * [multiprocessing](https://docs.python.org/2/library/multiprocessing.html)
 * [scipy](https://www.scipy.org/)
 * [numpy](www.numpy.org)
-* [poibin](https://github.com/tsakim/poibin) Implementation of the Poisson Binomail probability distribution
+* [poibin](https://github.com/tsakim/poibin) Module for the Poisson Binomial probability distribution 
 
 ## Usage
 Be `td` a binary matrix in the form of an numpy array. The nodes of the two
@@ -66,11 +68,10 @@ python -m doctest bicm_tests.txt
 in the folder `src`.
 
 ## References
-* Squartini, Garlaschelli - Analytical maximum-likelihood method to detect
-patterns in real networks, DOI: 10.1088/1367-2630/13/8/083001
-
-* Saracco, Di Clemente, Gabrielli, Squartini - Randomizing bipartite networks:
-the case of the World Trade Web, DOI: 10.1038/srep10595
+* \[1\] [Saracco, Di Clemente, Gabrielli, Squartini - Randomizing bipartite networks:
+the case of the World Trade Web](http://www.nature.com/articles/srep10595)
+* \[2\][Squartini, Garlaschelli - Analytical maximum-likelihood method to detect
+patterns in real networks](http://iopscience.iop.org/article/10.1088/1367-2630/13/8/083001)
 
 ---
 Copyright (C) 2015-2016 Mika Straka 

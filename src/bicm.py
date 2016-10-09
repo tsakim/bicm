@@ -96,6 +96,7 @@ class BiCM:
                 of a bipartite graph with the nodes of one layer along the rows
                 and the nodes of the other layer along the columns.
         :type bin_mat: np.array
+        :param main_dir: directory containing the src/ and output/ folders
         """
         self.bin_mat = np.array(bin_mat)
         self.check_input_matrix_is_binary()

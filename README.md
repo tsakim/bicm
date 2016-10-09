@@ -20,7 +20,7 @@ Mika Straka
 
 ### This Version
 The newest version can be found on
-[https://github.com/tsakim/poibin](https://github.com/tsakim/poibin).
+[https://github.com/tsakim/bicm](https://github.com/tsakim/bicm).
 
 ## Dependencies
 * [ctypes](https://docs.python.org/2/library/ctypes.html)
@@ -28,7 +28,8 @@ The newest version can be found on
 * [scipy](https://www.scipy.org/)
 * [numpy](www.numpy.org)
 * [doctest](https://docs.python.org/2/library/doctest.html)
-* [poibin](https://github.com/tsakim/poibin) Module for the Poisson Binomial probability distribution 
+* [poibin](https://github.com/tsakim/poibin) Module for the Poisson Binomial
+  probability distribution 
 
 ## Usage
 Be `input_mat` a two-dimensional binary numpy array describing the biadjacency

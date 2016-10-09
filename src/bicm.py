@@ -12,11 +12,11 @@ Description:
     Implementation of the Bipartite Configuration Model (BiCM) for binary
     undirected bipartite networks, see reference below.
 
-    Given a biadjacency matrix of a bipartite graph in the form of a binary
-    array with rectangular shape as input, the module calculates the biadjacency
-    matrix for the corresponding ensemble average graph <G>^*, where the matrix
-    entries correspond to the link probabilities <G>^*_ij = p_ij between nodes
-    of the two distinct bipartite node sets.
+    Given the biadjacency matrix of a bipartite graph in the form of a binary
+    array as input, the module calculates the biadjacency matrix for the
+    corresponding ensemble average graph <G>^*, where the matrix entries
+    correspond to the link probabilities <G>^*_ij = p_ij between nodes of the
+    two distinct bipartite node sets.
 
 Usage:
     Be <td> a binary matrix in the form of an numpy array. The nodes of the two
@@ -38,7 +38,7 @@ Usage:
 
         $ cm.save_matrix(cm.adj_matrix, filename=<filename>, delim='\t')
 
-    In order to analyze similarity of the row-layer nodes and to save the
+    In order to analyze the similarity of the row-layer nodes and to save the
     p-values of the corresponding Lambda-motifs in the folder "bicm/output/", use
 
         $ cm.lambda_motifs(True, filename='p_values_True.csv', delim='\t')

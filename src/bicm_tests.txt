@@ -166,3 +166,7 @@ Usage:
     >> pv_parallel = bb.get_pvalues(plambm, nlambm, parallel=True)
     >> np.all(pv_sequential == pv_parallel)
     True
+
+# BiCM.get_lambda_probdist ----------------------------------------------------- 
+
+    >>> 

@@ -207,7 +207,7 @@ class BiCM:
         Note that i and j are taken from opposite bipartite node sets and
         i != j.
 
-        :param xx: Lagrande multipliers / solutions of the system
+        :param xx: Lagrange multipliers / solutions of the system
         :type xx: np.array
         """
         mat = np.empty((self.num_rows, self.num_columns))
@@ -278,6 +278,8 @@ class BiCM:
         self.get_pvalues_q(plam_mat, nlam_mat, parallel)
         if filename is None:
             fname = 'p_values_' + str(bip_set) + '.csv'
+        else:
+            fname = filename
         self.save_matrix(self.pval_mat, filename=fname, delim=delim)
 
     @staticmethod
@@ -423,6 +425,119 @@ class BiCM:
                 i = val[0]
                 j = val[1]
                 self.pval_mat[i, j] = val[2]
+
+# ------------------------------------------------------------------------------
+# Probability distributions for Lambda values
+# ------------------------------------------------------------------------------
+
+    def save_lambda_probdist(self, bip_set, parallel=True, filename=None,
+                             delim='\t'):
+        """Obtain and save the p-values of the Lambda motifs observed in the
+        binary input matrix for the node set defined by bip_set.
+
+        :param bip_set: selects row-nodes (True) or column-nodes (False)
+        :type bip_set: bool
+        :param parallel: defines whether function should be run in parallel
+            True = use parallel processing,
+            False = don't use parallel processing
+        :type parallel: bool
+        """
+        plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
+        self.get_lambda_probdist_q(plam_mat, bip_set, parallel=parallel)
+        if filename is None:
+            fname = 'bicm_lambda_probdist_layer_' + str(bip_set) + '.csv'
+        else:
+            fname = filename
+        self.save_matrix(self.probdist_mat, filename=fname, delim=delim)
+
+    def get_lambda_probdist_q(self, plam_mat, bip_set, parallel=True):
+        """Apply the Poisson Binomial distribution of each node couple on
+        all the possible number of nearest neighbors they can have, i.e.
+        the set [0, 1, ..., M], where M is the number of nodes in the opposite
+        bipartite layer.
+        """
+        if bip_set:
+            n = self.num_rows
+            m = self.num_columns
+        elif not bip_set:
+            n = self.num_columns
+            m = self.num_rows
+        else:
+            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
+            raise NameError(errmsg)
+
+        # the array must be sharable to be accessible by all processes
+        shared_array_base = multiprocessing.Array(
+                            ctypes.c_double, n * (n - 1) * m / 2)
+        probdist_mat = np.frombuffer(shared_array_base.get_obj())
+        self.probdist_mat = probdist_mat.reshape(n * (n - 1) / 2, m)
+        lambda_values = np.arange(m + 1)
+
+        # number of processes running in parallel has to be tested.
+        # good guess is multiprocessing.cpu_count() +- 1
+        if parallel:
+            numprocs = multiprocessing.cpu_count() - 1
+        else:
+            numprocs = 1
+        self.input_queue = multiprocessing.Queue()
+        self.output_queue = multiprocessing.Queue()
+
+        p_inqueue = multiprocessing.Process(target=self.probdist_add2inqueue,
+                                            args=(numprocs, plam_mat,
+                                                  lambda_values))
+        p_outqueue = multiprocessing.Process(target=self.probdist_outqueue2mat,
+                                             args=(numprocs, ))
+        ps = [multiprocessing.Process(target=self.probdist_process_worker,
+                                      args=()) for i in range(numprocs)]
+        # start queues
+        p_inqueue.start()
+        p_outqueue.start()
+        # start processes
+        for p in ps:
+            p.start()       # each process has an id, p.pid
+        p_inqueue.join()
+        for p in ps:
+            p.join()
+        p_outqueue.join()
+
+    def probdist_add2inqueue(self, nprocs, plam_mat, lambda_values):
+        """Add matrix entries to in-queue in order to calculate the probablity
+        distibutions.
+        """
+        n = plam_mat.shape[0]
+        # add tuples of matrix elements and indices to the input queue
+        for i in xrange(n):
+            for j in xrange(i + 1, n):
+                self.input_queue.put((i, j, plam_mat[i, j], lambda_values))
+        # add as many poison pills "STOP" to the queue as there are workers
+        for i in xrange(nprocs):
+            self.input_queue.put("STOP")
+
+    def probdist_process_worker(self):
+        """Take an element from the queue and calculate the probability of the
+         possible lambda values. Add the result to the out-queue.
+        """
+        # take elements from the queue as long as the element is not "STOP"
+        for tupl in iter(self.input_queue.get, "STOP"):
+            pb = PoiBin(tupl[2])
+            lambdaprobs = pb.pmf(tupl[3])
+            # add the result to the output queue
+            self.output_queue.put((tupl[0], tupl[1], lambdaprobs))
+        # once all the elements in the input queue have been dealt with, add a
+        # "STOP" to the output queue
+        self.output_queue.put("STOP")
+
+    def probdist_outqueue2mat(self, nprocs):
+        """Take the results from the out-queue and put them into the lambda
+        probability matrix.
+        """
+        # stop the work after having met nprocs times "STOP"
+        for work in xrange(nprocs):
+            for val in iter(self.output_queue.get, "STOP"):
+                i = val[0]
+                j = val[1]
+                k = i + j - 1
+                self.probdist_mat[k, :] = val[2]
 
 # ------------------------------------------------------------------------------
 # Auxiliary methods

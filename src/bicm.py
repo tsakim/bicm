@@ -432,8 +432,8 @@ class BiCM:
 
     def save_lambda_probdist(self, bip_set, parallel=True, write=True,
                              filename=None, delim='\t', binary=True):
-        """Obtain and save the p-values of the Lambda motifs observed in the
-        binary input matrix for the node set defined by bip_set. The matrix can
+        """Obtain and save the probablities of all possible values of the
+        Lambda motifs for the node set defined by bip_set. The matrix can
         either be saved as human-readable ASCII or as a binary Numpy file.
 
         :param bip_set: selects row-nodes (True) or column-nodes (False)

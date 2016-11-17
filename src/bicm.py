@@ -550,7 +550,6 @@ class BiCM:
                 i = val[0]
                 j = val[1]
                 k = self.triumat2flat_idx(i, j, mat_dim)
-                print k
                 self.probdist_mat[k, :] = val[2]
 
 # ------------------------------------------------------------------------------

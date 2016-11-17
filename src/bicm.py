@@ -468,9 +468,9 @@ class BiCM:
 
         # the array must be sharable to be accessible by all processes
         shared_array_base = multiprocessing.Array(
-                            ctypes.c_double, n * (n - 1) * m / 2)
+                            ctypes.c_double, n * (n - 1) * (m + 1) / 2)
         probdist_mat = np.frombuffer(shared_array_base.get_obj())
-        self.probdist_mat = probdist_mat.reshape(n * (n - 1) / 2, m)
+        self.probdist_mat = probdist_mat.reshape(n * (n - 1) / 2, m + 1)
         lambda_values = np.arange(m + 1)
 
         # number of processes running in parallel has to be tested.

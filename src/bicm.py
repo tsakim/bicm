@@ -431,9 +431,10 @@ class BiCM:
 # ------------------------------------------------------------------------------
 
     def save_lambda_probdist(self, bip_set, parallel=True, filename=None,
-                             delim='\t'):
+                             delim='\t', binary=True):
         """Obtain and save the p-values of the Lambda motifs observed in the
-        binary input matrix for the node set defined by bip_set.
+        binary input matrix for the node set defined by bip_set. The matrix can
+        either be saved as human-readable ASCII or as a binary Numpy file.
 
         :param bip_set: selects row-nodes (True) or column-nodes (False)
         :type bip_set: bool
@@ -441,14 +442,21 @@ class BiCM:
             True = use parallel processing,
             False = don't use parallel processing
         :type parallel: bool
+        :param binary: if true, save as binary .npy file. Otherwise as .csv
+                        file
         """
         plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
         self.get_lambda_probdist_q(plam_mat, bip_set, parallel=parallel)
         if filename is None:
-            fname = 'bicm_lambda_probdist_layer_' + str(bip_set) + '.csv'
+            fname = 'bicm_lambda_probdist_layer_' + str(bip_set)
         else:
             fname = filename
-        self.save_matrix(self.probdist_mat, filename=fname, delim=delim)
+        if binary:
+            fname += '.npy'
+        else:
+            fname += '.csv'
+        self.save_matrix(self.probdist_mat, filename=fname, delim=delim,
+                         binary=binary)
 
     def get_lambda_probdist_q(self, plam_mat, bip_set, parallel=True):
         """Apply the Poisson Binomial distribution of each node couple on
@@ -556,15 +564,21 @@ class BiCM:
         dirpath = s[:s.index(main_dir_name) + len(main_dir_name) + 1]
         return dirpath
 
-    def save_matrix(self, mat, filename, delim='\t'):
-        """Save the input matrix in a csv-file.
+    def save_matrix(self, mat, filename, delim='\t', binary=False):
+        """Save the input matrix. If binary is true, the matrix will be saved
+        in a .npy binary file. Otherwise in a csv-file.
 
         :param mat: two-dimensional matrix
         :param filename: name of the output file
         :param delim: delimiter between values in file.
+        :param binary: if true, save as binary .npy file. Otherwise as .csv
+                        file
         """
         fname = ''.join([self.main_dir, '/output/', filename])
-        np.savetxt(fname, mat, delimiter=delim)
+        if binary:
+            np.save(fname, mat)
+        else:
+            np.savetxt(fname, mat, delimiter=delim)
 
 ################################################################################
 # Main

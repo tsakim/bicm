@@ -430,8 +430,8 @@ class BiCM:
 # Probability distributions for Lambda values
 # ------------------------------------------------------------------------------
 
-    def save_lambda_probdist(self, bip_set, parallel=True, filename=None,
-                             delim='\t', binary=True):
+    def save_lambda_probdist(self, bip_set, parallel=True, write=True,
+                             filename=None, delim='\t', binary=True):
         """Obtain and save the p-values of the Lambda motifs observed in the
         binary input matrix for the node set defined by bip_set. The matrix can
         either be saved as human-readable ASCII or as a binary Numpy file.
@@ -442,21 +442,26 @@ class BiCM:
             True = use parallel processing,
             False = don't use parallel processing
         :type parallel: bool
+        :param write: if true, write the file to disk
+        :param filename: filename. If binary is true, it should end with '.npy',
+                        otherwise with '.csv'
+        :param delim: delimiter to use if file is saved as .csv
         :param binary: if true, save as binary .npy file. Otherwise as .csv
                         file
         """
         plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
         self.get_lambda_probdist_q(plam_mat, bip_set, parallel=parallel)
-        if filename is None:
-            fname = 'bicm_lambda_probdist_layer_' + str(bip_set)
-        else:
-            fname = filename
-        if binary:
-            fname += '.npy'
-        else:
-            fname += '.csv'
-        self.save_matrix(self.probdist_mat, filename=fname, delim=delim,
-                         binary=binary)
+        if write:
+            if filename is None:
+                fname = 'bicm_lambda_probdist_layer_' + str(bip_set)
+                if binary:
+                    fname += '.npy'
+                else:
+                    fname += '.csv'
+            else:
+                fname = filename
+            self.save_matrix(self.probdist_mat, filename=fname, delim=delim,
+                             binary=binary)
 
     def get_lambda_probdist_q(self, plam_mat, bip_set, parallel=True):
         """Apply the Poisson Binomial distribution of each node couple on
@@ -494,7 +499,7 @@ class BiCM:
                                             args=(numprocs, plam_mat,
                                                   lambda_values))
         p_outqueue = multiprocessing.Process(target=self.probdist_outqueue2mat,
-                                             args=(numprocs, ))
+                                             args=(numprocs, n))
         ps = [multiprocessing.Process(target=self.probdist_process_worker,
                                       args=()) for i in range(numprocs)]
         # start queues
@@ -535,7 +540,7 @@ class BiCM:
         # "STOP" to the output queue
         self.output_queue.put("STOP")
 
-    def probdist_outqueue2mat(self, nprocs):
+    def probdist_outqueue2mat(self, nprocs, mat_dim):
         """Take the results from the out-queue and put them into the lambda
         probability matrix.
         """
@@ -544,12 +549,24 @@ class BiCM:
             for val in iter(self.output_queue.get, "STOP"):
                 i = val[0]
                 j = val[1]
-                k = i + j - 1
+                k = self.triumat2flat_idx(i, j, mat_dim)
+                print k
                 self.probdist_mat[k, :] = val[2]
 
 # ------------------------------------------------------------------------------
 # Auxiliary methods
 # ------------------------------------------------------------------------------
+
+    @staticmethod
+    def triumat2flat_idx(idx_i, idx_j, n):
+        """Convert index couple (i, j) into index in one-dimensional array index
+        for the upper triangular part of a square matrix with dimension n. I.e.
+        idx_i runs from 0, ..., n and idx_j runs from idx_i + 1, ..., n
+
+        NB: the returned indices start from 0.
+        """
+        return int((idx_i + 1) * n - (idx_i + 2) * (idx_i + 1) / 2.
+                   - (n - (idx_j + 1)) - 1)
 
     @staticmethod
     def get_main_dir(main_dir_name='bicm'):

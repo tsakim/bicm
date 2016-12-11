@@ -278,6 +278,8 @@ class BiCM:
         self.get_pvalues_q(plam_mat, nlam_mat, parallel)
         if filename is None:
             fname = 'p_values_' + str(bip_set) + '.csv'
+        else:
+            fname = filename
         self.save_matrix(self.pval_mat, filename=fname, delim=delim)
 
     @staticmethod

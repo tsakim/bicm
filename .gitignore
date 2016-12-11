@@ -1,2 +1,4 @@
 *.pyc
 todo.txt
+.idea
+TODO.mkdn

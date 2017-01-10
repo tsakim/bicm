@@ -21,7 +21,7 @@ An example case is illustrated in the :ref:`tutorial`.
 How to cite
 --------------------------------------------------------------------------------
 
-If you use the ``bicm`` module, please cite the its `location on Github
+If you use the ``bicm`` module, please cite its `location on Github
 <https://github.com/tsakim/bicm>`_ and the original articles [Saracco2015]_ and
 [Saracco2016]_. 
 

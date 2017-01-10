@@ -23,11 +23,12 @@ The newest version of the module can be found on
 [https://github.com/tsakim/bicm](https://github.com/tsakim/bicm).
 
 The complete documentation is available at
-[](...) and in the file `docs/BiCM_manual.pdf`
+[http://bicm.readthedocs.io/](http://bicm.readthedocs.io/) and in the file
+`docs/BiCM_manual.pdf`
 
 ## How to cite
 
-If you use the `bicm` module, please cite the its location on Github
+If you use the `bicm` module, please cite its location on Github
 [https://github.com/tsakim/bicm](https://github.com/tsakim/bicm) and the
 original articles \[Saracco2015\] and \[Saracco2016\]. 
 

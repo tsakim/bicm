@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tutorial &mdash; Bipartite Configuration Model 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Bipartite Configuration Model 1.0 documentation" href="../index.html" />
+    <link rel="next" title="Testing" href="testing.html" />
+    <link rel="prev" title="BiCM Quickstart" href="quickstart.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="testing.html" title="Testing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="quickstart.html" title="BiCM Quickstart"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Bipartite Configuration Model 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tutorial">
+<span id="id1"></span><h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<p>The tutorial will take you step by step from the biadjacency matrix of a
+real-data network to the calculation of the p-values. Our example bipartite
+network will be the following:</p>
+<a class="reference internal image-reference" href="../_images/nw.png"><img alt="../_images/nw.png" class="align-center" src="../_images/nw.png" style="width: 25%;" /></a>
+<p>The structure of the network can be caught in the <a class="reference external" href="https://en.wikipedia.org/w/index.php?title=Adjacency_matrix&amp;oldid=751840428#Adjacency_matrix_of_a_bipartite_graph">biadjacency matrix</a>.
+In our case, the matrix is</p>
+<div class="math">
+\[\begin{split}\left[
+\begin{matrix}
+    1 &amp; 1 &amp; 0 &amp; 0 \\
+    0 &amp; 1 &amp; 1 &amp; 1 \\
+    0 &amp; 1 &amp; 0 &amp; 1
+\end{matrix}
+\right]\end{split}\]</div>
+<p>Note that the nodes of the layers of the bipartite network are ordered along
+the rows and the columns, respectively. In the algorithms, the two layers are
+identified by the boolean values <tt class="docutils literal"><span class="pre">True</span></tt> for the <strong>row-nodes</strong> and <tt class="docutils literal"><span class="pre">False</span></tt> for
+the <strong>column-nodes</strong>. In our example image, the row-nodes are colored in blue
+(top layer) and the column-nodes in red (bottom layer).</p>
+<p>Let&#8217;s get started by importing the necessary modules:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">src.bicm</span> <span class="kn">import</span> <span class="n">BiCM</span>
+</pre></div>
+</div>
+<p>The biadjacency matrix of our toy network will be saved in the two-dimensional
+NumPy array <tt class="docutils literal"><span class="pre">mat</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+<span class="go">                    [0, 1, 1, 1],</span>
+<span class="go">                    [0, 1, 0, 1]])</span>
+</pre></div>
+</div>
+<p>and we initialize the Bipartite Configuration Model with:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cm</span> <span class="o">=</span> <span class="n">BiCM</span><span class="p">(</span><span class="n">bin_mat</span><span class="o">=</span><span class="n">mat</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In order to obtain the biadjacency matrix of the BiCM null model corresponding
+to the input network, a number of equations have to be solved. However, this is
+done automatically by running:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cm</span><span class="o">.</span><span class="n">make_bicm</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can now save the bidajacency matrix in the file <em>&lt;filename&gt;</em> as:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">save_biadjacency</span><span class="p">(</span><span class="n">filename</span><span class="o">=&lt;</span><span class="n">filename</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">delim</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the default delimiter is <tt class="docutils literal"><span class="pre">\t</span></tt>. Other delimiters such as <tt class="docutils literal"><span class="pre">,</span></tt> or
+<tt class="docutils literal"><span class="pre">;</span></tt> work fine as well. The matrix can either be saved as a human-readable
+<tt class="docutils literal"><span class="pre">.csv</span></tt> or as a binary NumPy <tt class="docutils literal"><span class="pre">.npy</span></tt> file, see <tt class="xref py py-func docutils literal"><span class="pre">save_biadjacency()</span></tt> in
+the <a class="reference internal" href="src.html#api"><em>API</em></a>. In our example graph, the BiCM matrix should be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cm</span><span class="o">.</span><span class="n">adj_matrix</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">array</span><span class="p">([[</span> <span class="mf">0.21602144</span><span class="p">,</span>  <span class="mf">0.99855239</span><span class="p">,</span>  <span class="mf">0.21602144</span><span class="p">,</span>  <span class="mf">0.56873952</span><span class="p">],</span>
+<span class="go">           [ 0.56845256,  0.99969684,  0.56845256,  0.86309703],</span>
+<span class="go">           [ 0.21602144,  0.99855239,  0.21602144,  0.56873952]])</span>
+</pre></div>
+</div>
+<p>Each entry in the matrix corresponds to the probability of observing a link
+between the corresponding row- and column-nodes. If we take two nodes in the
+same layer, we can count the number of common neighbors that they share in the
+original input network and calculate the probability of observing the same of
+more common neighbors according to the BiCM <a class="reference internal" href="../index.html#saracco2016" id="id2">[Saracco2016]</a>. This corresponds to
+calculating the p-values for a right-sided hypothesis testing.</p>
+<p>The calculation of the p-values is computation and memory intensive and should
+be performed in parallel, see <a class="reference internal" href="parallel.html#parallel"><em>Parallel Computation</em></a> for details. It can be executed
+by simply running:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cm</span><span class="o">.</span><span class="n">lambda_motifs</span><span class="p">(</span><span class="o">&lt;</span><span class="nb">bool</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=&lt;</span><span class="n">filename</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">delim</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <tt class="docutils literal"><span class="pre">&lt;bool&gt;</span></tt> is either <tt class="docutils literal"><span class="pre">True</span></tt> of <tt class="docutils literal"><span class="pre">False</span></tt> depending on whether one wants
+to address the similarities of the <strong>row-</strong> or <strong>column-nodes</strong>, respectively,
+and <tt class="docutils literal"><span class="pre">&lt;filename&gt;</span></tt> is the name of the output file.</p>
+<p>Having calculated the p-values, it is possible to perform a multiple hypothesis
+testing with FDR control and to obtain an unbiased monopartite projection of
+the original bipartite network. In the projection, only statistically
+significant edges are kept.</p>
+<p>For further information on the post-processing and the monopartite projections,
+please refer to <a class="reference internal" href="../index.html#saracco2016" id="id3">[Saracco2016]</a>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="quickstart.html"
+                        title="previous chapter">BiCM Quickstart</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="testing.html"
+                        title="next chapter">Testing</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/source/tutorial.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="testing.html" title="Testing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="quickstart.html" title="BiCM Quickstart"
+             >previous</a> |</li>
+        <li><a href="../index.html">Bipartite Configuration Model 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Mika Straka.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

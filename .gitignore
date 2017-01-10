@@ -1,4 +1,5 @@
 *.pyc
-todo.txt
+*todo.txt
+*TODO*
+output/*.csv
 .idea
-TODO.mkdn

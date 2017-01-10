@@ -10,93 +10,104 @@ Author:
 
 Description:
     Implementation of the Bipartite Configuration Model (BiCM) for binary
-    undirected bipartite networks, see reference below.
+    undirected bipartite networks [Saracco2015]_.
 
     Given the biadjacency matrix of a bipartite graph in the form of a binary
     array as input, the module calculates the biadjacency matrix for the
-    corresponding ensemble average graph <G>^*, where the matrix entries
-    correspond to the link probabilities <G>^*_ij = p_ij between nodes of the
-    two distinct bipartite node sets.
+    corresponding ensemble average graph :math:`<G>^*`, where the matrix
+    entries correspond to the link probabilities :math:`<G>^*_{rc} = p_{rc}`
+    between nodes of the two distinct bipartite node sets. Subsequently, one
+    can calculate the p-values of the node similarities for nodes in the same
+    bipartite layer [Saracco2015]_.
 
 Usage:
-    Be <td> a binary matrix in the form of an numpy array. The nodes of the two
-    distinct bipartite layers are ordered along the columns and rows. In the
-    following, rows and columns are referred to by the booleans "True" and
-    "False" and the nodes are called "row-nodes" and "column-nodes",
-    respectively.
+    Be ``mat`` a two-dimensional binary NumPy array. The nodes of the two
+    bipartite layers are ordered along the columns and rows, respectively. In
+    the algorithm, the two layers are identified by the boolean values ``True``
+    for the **row-nodes** and ``False`` for the **column-nodes**.
 
-    Initialize the Bipartite Configuration Model for the matrix <td> with
+    Import the module and initialize the Bipartite Configuration Model::
 
-        $ cm = BiCM(bin_mat=td)
+        >>> from src.bicm import BiCM
+        >>> cm = BiCM(bin_mat=mat)
 
-    To create the BiCM by solving the corresponding equation system, use
+    To create the biadjacency matrix of the BiCM, use::
 
-        $ cm.make_bicm()
+        >>> cm.make_bicm()
 
-    The biadjacency matrix of the BiCM null model can be saved in the folder
-    "bicm/output/" as
+    The biadjacency matrix of the BiCM null model can be saved in *<filename>*::
 
-        $ cm.save_matrix(cm.adj_matrix, filename=<filename>, delim='\t')
+        >>> cm.save_matrix(cm.adj_matrix, filename=<filename>, delim='\\t')
+
+    By default, the file is saved in a human-readable CSV format. The
+    information can also be saved as a binary NumPy file ``.npy`` by using::
+
+        >>> cm.save_matrix(cm.adj_matrix, filename=<filename>, binary=True)
 
     In order to analyze the similarity of the row-layer nodes and to save the
-    p-values of the corresponding Lambda-motifs in the folder "bicm/output/", use
+    p-values of the corresponding :math:`\Lambda`-motifs, i.e. of the number of
+    shared neighbors [Saracco2016]_, use::
 
-        $ cm.lambda_motifs(True, filename='p_values_True.csv', delim='\t')
+        >>> cm.lambda_motifs(True, filename='p_values_True.csv', delim='\\t')
 
-    For the column-layer nodes, use
+    For the column-layer nodes, use::
 
-        $ cm.lambda_motifs(False, filename='p_values_False.csv', delim='\t')
+        >>> cm.lambda_motifs(False, filename='p_values_False.csv', delim='\\t')
 
-NB Main folder
-    Note that saving the files requires the name of the main directory
-    which contains the folder "src" and itself contains the file bicm.py.
-    If the folder name is NOT the default "bicm", the BiCM instance has to be
-    initialized as
+    Subsequently, the p-values can be used to perform a multiple hypotheses
+    testing and to obtain statistically validated monopartite projections
+    [Saracco2016]_. The p-values are calculated in parallel by default.
 
-        $ cm = BiCM(bin_mat=td, main_dir=<main directory name>)
+.. note::
 
+    Since the calculation of the p-values is computationally demanding, the
+    ``bicm`` module uses the Python `multiprocessing
+    <https://docs.python.org/2/library/multiprocessing.html>`_ package by
+    default for this purpose.  The number of parallel processes depends on the
+    number of CPUs of the work station (see variable ``numprocs`` in the method
+    :func:`BiCM.get_pvalues_q`).
 
-Parallel computation:
-    The module uses the Python multiprocessing package in order to execute the
-    calculation of the p-values in parallel. The number of parallel processes
-    depends on the number of CPUs of the work station, see variable "numprocs"
-    in method "self.get_pvalues_q".
-    If the calculation should not be performed in parallel, use
+    If the calculation should **not** be performed in parallel, use::
 
-        $ cm.lambda_motifs(True, parallel=False)
+        >>> cm.lambda_motifs(<bool>, parallel=False)
 
-    and respectively
+    instead of::
 
-        $ cm.lambda_motifs(False, parallel=False)
+        >>> cm.lambda_motifs(<bool>)
 
 Reference:
-    Saracco, F. et al. Randomizing bipartite networks: the case of the World
-    Trade Web.
-    Sci. Rep. 5, 10595;
-    doi: 10.1038/srep10595 (2015).
+    [Saracco2015] F. Saracco, R. Di Clemente, A. Gabrielli, T. Squartini,
+    Randomizing bipartite networks: the case of the World Trade Web, Scientific
+    Reports 5, 10595 (2015)
+
+    [Saracco2016] F. Saracco, M. J. Straka, R. Di Clemente, A. Gabrielli, G.
+    Caldarelli, T. Squartini, Inferring monopartite projections of bipartite
+    networks: an entropy-based approach, arXiv preprint arXiv:1607.02481
 """
 
 import ctypes
 import multiprocessing
-import os
 import scipy.optimize as opt
 import numpy as np
 from poibin.poibin import PoiBin
 
 
 class BiCM:
-    """Create the Bipartite Configuration Model for the input matrix and
-    analyze the Lambda motifs.
+    """Bipartite Configuration model for undirected binary bipartite networks.
+
+    This class implements the Bipartite Configuration Model (BiCM), which can
+    be used as a null model for the analysis of undirected and binary bipartite
+    networks. The class provides methods to calculate the biadjacency matrix of
+    the null model and to calculate node similarities in terms of p-values.
     """
 
-    def __init__(self, bin_mat, main_dir='bicm'):
+    def __init__(self, bin_mat):
         """Initialize the parameters of the BiCM.
 
         :param bin_mat: binary input matrix describing the biadjacency matrix
                 of a bipartite graph with the nodes of one layer along the rows
                 and the nodes of the other layer along the columns.
-        :type bin_mat: np.array
-        :param main_dir: directory containing the src/ and output/ folders
+        :type bin_mat: numpy.array
         """
         self.bin_mat = np.array(bin_mat)
         self.check_input_matrix_is_binary()
@@ -108,17 +119,21 @@ class BiCM:
         self.pval_mat = None        # matrix containing the resulting p-values
         self.input_queue = None     # queue for parallel processing
         self.output_queue = None    # queue for parallel processing
-        self.main_dir = self.get_main_dir(main_dir)
 
     def check_input_matrix_is_binary(self):
-        """Check that the input matrix is binary, i.e. entries are either
-        0 or 1.
+        """Check that the input matrix is binary, i.e. entries are 0 or 1.
+
+        :raise AssertationError: raise an error if the input matrix is not
+            binary
         """
         assert np.all(np.logical_or(self.bin_mat == 0, self.bin_mat == 1)), \
             "Input matrix is not binary."
 
     def set_degree_seq(self):
-        """Set the degree sequence [degrees row-nodes, degrees column-nodes].
+        """Return the node degree sequence of the input matrix.
+
+        :returns: node degree sequence [degrees row-nodes, degrees column-nodes]
+        :rtype: numpy.array
         """
         dseq = np.empty(self.num_rows + self.num_columns)
         dseq[self.num_rows:] = np.squeeze(np.sum(self.bin_mat, axis=0))
@@ -127,8 +142,14 @@ class BiCM:
         return dseq
 
     def make_bicm(self):
-        """Create the biadjacency matrix of the BiCM corresponding to the
+        """Create the biadjacency matrix of the BiCM null model.
+
+        Solve the log-likelihood maximization problem to obtain the BiCM
+        null model which respects constraints on the the degree sequence of the
         input matrix.
+
+        :raise AssertationError: raise an error if the adjacency matrix of the
+            null model has different dimensions than the input matrix
         """
         # print "+++Generating bipartite configuration model..."
         self.sol = self.solve_equations(self.equations, self.jacobian)
@@ -136,7 +157,7 @@ class BiCM:
         self.adj_matrix = self.get_biadjacency_matrix(self.sol.x)
         # assert size of matrix
         assert self.adj_matrix.shape == self.bin_mat.shape, \
-            "Biadjacency matrix has wrong dimension."
+            "Biadjacency matrix has wrong dimensions."
         self.test_average_degrees()
 
 # ------------------------------------------------------------------------------
@@ -144,28 +165,33 @@ class BiCM:
 # ------------------------------------------------------------------------------
 
     def solve_equations(self, eq, jac):
-        """Solve the system of nonlinear equations using scipy's root function.
-        The solutions correspond to the Lagrange multipliers
+        """Solve the system of equations of the maximum log-likelihood problem.
 
-            x_i = exp(-\theta_i).
+        The system of equations is solved using ``scipy``'s root function. The
+        solutions correspond to the Lagrange multipliers
 
-        :param eq: system of equations f(x) = 0
-        :type eq: np.array
+            :math:`x_i = \exp(-\\theta_i).`
+
+        :param eq: system of equations (:math:`f(x) = 0`)
+        :type eq: numpy.array
         :param jac: Jacobian of the system
-        :type jac: np.array
+        :type jac: numpy.ndarray
+        :returns: solution of the equation system
         """
         init_guess = 0.5 * np.ones(self.dim)
         sol = opt.root(fun=eq, x0=init_guess, jac=jac)
         return sol
 
     def equations(self, xx):
-        """Return an array with the equations of the system. Note that the
-        equations for the row-nodes depend only on the x-values of the
+        """Return the equations of the log-likelihood maximization problem.
+
+        Note that the equations for the row-nodes depend only on the
         column-nodes and vice versa, see reference mentioned in the header.
 
         :param xx: Lagrange multipliers which have to be solved
-        :type xx: np.array
-        :return : np.array of equations = 0
+        :type xx: numpy.array
+        :returns: equations to be solved (of the form :math:`f(x) = 0`)
+        :rtype: numpy.array
         """
         eq = -self.dseq
         for i in xrange(0, self.num_rows):
@@ -176,12 +202,12 @@ class BiCM:
         return eq
 
     def jacobian(self, xx):
-        """Return a numpy array with the Jacobian for the system of equations
-        defined in self.equations.
+        """Return a NumPy array with the Jacobian of the equation system.
 
         :param xx: Lagrange multipliers which have to be solved
-        :type xx: np.array
-        :return : np.ndarray Jacobian
+        :type xx: numpy.array
+        :returns: Jacobian
+        :rtype: 2d numpy.array
         """
         jac = np.zeros((self.dim, self.dim))
         for i in xrange(0, self.num_rows):
@@ -197,18 +223,24 @@ class BiCM:
         return jac
 
     def get_biadjacency_matrix(self, xx):
-        """ Calculate the biadjacency matrix of the solved system. The
-        biadjacency matrix describes the BiCM, i.e. the optimal average graph
-        <G>^* with the elements G_ij == average link probabilities p_ij,
+        """ Calculate the biadjacency matrix of the null model.
 
-            p_ij = x_i * x_j / (1.0 + x_i * x_j),
+        The biadjacency matrix describes the BiCM null model, i.e. the optimal
+        average graph :math:`<G>^*` with the average link probabilities
+        :math:`<G>^*_{rc} = p_{rc}` ,
+        :math:`p_{rc} = \\frac{x_r \\cdot x_c}{1.0 + x_r\\cdot x_c}.`
+        :math:`x` are the solutions of the equation system which has to be
+        solved for the null model.
+        Note that :math:`r` and :math:`c` are taken from opposite bipartite
+        node sets, thus :math:`r \\neq c`.
 
-        where x are the solutions of the equations solved above.
-        Note that i and j are taken from opposite bipartite node sets and
-        i != j.
+        :param xx: solutions of the equation system (Lagrange multipliers)
+        :type xx: numpy.array
+        :returns: biadjacency matrix of the null model
+        :rtype: numpy.array
 
-        :param xx: Lagrange multipliers / solutions of the system
-        :type xx: np.array
+        :raises ValueError: raise an error if :math:`p_{rc} < 0` or
+            :math:`p_{rc} > 1` for any :math:`r, c`
         """
         mat = np.empty((self.num_rows, self.num_columns))
         xp = xx[range(self.num_rows, self.dim)]
@@ -229,9 +261,10 @@ class BiCM:
 # ------------------------------------------------------------------------------
 
     def test_average_degrees(self):
-        """Test the degree sequence of the graph defined by the biadjacency
-        matrix. The node degrees should be equal to the input sequence
-        self.dseq.
+        """Test the constraints on the node degrees.
+
+        Assert that the degree sequence of the solved BiCM null model graph
+        corresponds to the degree sequence of the input graph.
         """
         ave_deg_columns = np.squeeze(np.sum(self.adj_matrix, axis=0))
         ave_deg_rows = np.squeeze(np.sum(self.adj_matrix, axis=1))
@@ -263,15 +296,18 @@ class BiCM:
 # ------------------------------------------------------------------------------
 
     def lambda_motifs(self, bip_set, parallel=True, filename=None, delim='\t'):
-        """Obtain and save the p-values of the Lambda motifs observed in the
-        binary input matrix for the node set defined by bip_set.
+        """Calculate and save the p-values of the :math:`\\Lambda`-motifs.
 
-        :param bip_set: selects row-nodes (True) or column-nodes (False)
+        For each node couple in the bipartite layer specified by ``bip_set``,
+        :math:`\\Lambda`-motifs and calculate the corresponding p-value.
+
+        :param bip_set: select row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
-        :param parallel: defines whether function should be run in parallel
-            True = use parallel processing,
-            False = don't use parallel processing
+        :param parallel: select whether the calculation of the p-values should
+            be run in parallel (``True``) or not (``False``)
         :type parallel: bool
+        :param filename: name of the file which will contain the p-values
+        :param delim: delimiter between entries in file, default is tab
         """
         plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
         nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
@@ -284,22 +320,22 @@ class BiCM:
 
     @staticmethod
     def get_plambda_matrix(biad_mat, bip_set):
-        """Return the tensor
+        """Return the :math:`\\Lambda`-motif probability tensor for ``bip_set``.
 
-            P_{\Lambda} = P_ij^c,
+        Given the biadjacency matrix ``biad_mat``,
+        :math:`\\mathbf{M}_{rc} = p_{rc}`, which contains the probabilities of
+        row-node `r` and column-node `c` being linked, the method returns the
+        tensor
 
-        where i, j \in same bipartite node set, i.e. both row or column
-        indices, and with input
+        :math:`P(\\Lambda)_{ij} = (M_{i\\alpha_1} \\cdot M_{j\\alpha_1},
+        M_{i\\alpha_2} \\cdot M_{j\\alpha_2}, ...),`
 
-            M P_ij = [M_{ic_1} * M_{jc_1}, M_{ic_2} * M_{jc_2}, ...]
-
-        over all c in the opposite bipartite node set.
-        The input matrix M (biad_mat) is a biadjacency matrix and bip_set
-        defines which bipartite node set should be considered.
+        where :math:`(i, j)` are two nodes of the bipartite layer ``bip_set``
+        and :math:`\\alpha_k` runs over the nodes in the opposite layer.
 
         :param biad_mat: biadjacency matrix
-        :type biad_mat: np.array
-        :param bip_set: selects row-nodes (True) or column-nodes (False)
+        :type biad_mat: numpy.array
+        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
         """
         if (type(bip_set) == bool) and bip_set:
@@ -318,15 +354,19 @@ class BiCM:
 
     @staticmethod
     def get_lambda_motif_matrix(mm, bip_set):
-        """Return the matrix of Lambda motifs based on the binary input
-        matrix.
+        """Return the number of :math:`\\Lambda`-motifs as found in ``mm``.
 
-        :param mm: binary matrix (rectangular / square shaped)
-        :type mm: np.array
-        :param bip_set: selects row-nodes (True) or column-nodes (False)
+        Given the binary input matrix ``mm``, count the number of
+        :math:`\\Lambda`-motifs between node couples of the bipartite layer
+        specified by ``bip_set``.
+
+        :param mm: binary matrix
+        :type mm: numpy.array
+        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
 
-        :return nlam_mat: square matrix of observed Lambda motifs
+        :returns: square matrix of observed :math:`\\Lambda`-motifs
+        :rtype: numpy.array
         """
         if (type(bip_set) == bool) and bip_set:
             nlam_mat = np.dot(mm, np.transpose(mm))
@@ -340,22 +380,28 @@ class BiCM:
         return nlam_mat
 
     def get_pvalues_q(self, plam_mat, nlam_mat, parallel=True):
-        """Apply the Poisson Binomial distribution on the values given in
-        nlam_mat using the probabilities in plam_mat.
+        """Calculate the p-values of the observed :math:`\\Lambda`-motifs.
+
+        For each number of :math:`\\Lambda`-motifs in ``nlam_mat``,
+        construct the Poisson Binomial distribution using the corresponding
+        probabilities in ``plam_mat`` and calculate the p-value.
+
+        .. note::
+            the lower-triangular part of the output matrix is null since
+            the matrix is symmetric by definition.
 
         :param plam_mat: array containing the list of probabilities for the
-                        single observations of Lambda motifs
-        :type plam_mat: np.array (square shaped, shape[0] == shape[1])
-        :param nlam_mat: array containing the observations of Lambda motifs
-        :type nlam_mat: np.array (square shaped, shape[0] == shape[1])
-        :param parallel: if True, the calculation is executed in parallel. If
-                        False, only one process is started.
+                        single observations of :math:`\\Lambda`-motifs
+        :type plam_mat: numpy.array (square matrix)
+        :param nlam_mat: array containing the observations of
+            :math:`\\Lambda`-motifs
+        :type nlam_mat: numpy.array (square matrix)
+        :param parallel: if ``True``, the calculation is executed in parallel;
+                        if ``False``, only one process is started
         :type parallel: bool
-        :return pval_mat: np.array containing the p-values corresponding to the
-                        values in nlam_mat.
-
-        NB: only upper triangular part of output is  != 0 since the matrix is
-        symmetric by definition.
+        :return pval_mat: array containing the p-values corresponding to the
+                        :math:`\\Lambda`-values in ``nlam_mat``
+        :rtype: numpy.array
         """
         n = nlam_mat.shape[0]
         # the array must be sharable to be accessible by all processes
@@ -391,7 +437,17 @@ class BiCM:
         p_outqueue.join()
 
     def add2inqueue(self, nprocs, plam_mat, nlam_mat):
-        """Add matrix entries to in-queue in order to calculate p-values."""
+        """Add elements to the in-queue to calculate the p-values.
+
+        :param nprocs: number of processes running in parallel
+        :type nprocs: int
+        :param plam_mat: array containing the list of probabilities for the
+            single observations of :math:`\\Lambda`-motifs
+        :type plam_mat: numpy.array (square matrix)
+        :param nlam_mat: array containing the observations of
+            :math:`\\Lambda`-motifs
+        :type nlam_mat: numpy.array (square matrix)
+        """
         n = plam_mat.shape[0]
         # add tuples of matrix elements and indices to the input queue
         for i in xrange(n):
@@ -402,9 +458,7 @@ class BiCM:
                 self.input_queue.put("STOP")
 
     def pval_process_worker(self):
-        """Take an element from the queue and calculate the p-value. Add the
-        result to the out-queue.
-        """
+        """Calculate one p-value and add the result to the out-queue."""
         # take elements from the queue as long as the element is not "STOP"
         for tupl in iter(self.input_queue.get, "STOP"):
             pb = PoiBin(tupl[2])
@@ -416,9 +470,7 @@ class BiCM:
         self.output_queue.put("STOP")
 
     def outqueue2pval_mat(self, nprocs):
-        """Take the results from the out-queue and put them into the p-value
-        matrix.
-        """
+        """Put the results from the out-queue into the p-value matrix."""
         # stop the work after having met nprocs times "STOP"
         for work in xrange(nprocs):
             for val in iter(self.output_queue.get, "STOP"):
@@ -429,172 +481,210 @@ class BiCM:
 # ------------------------------------------------------------------------------
 # Probability distributions for Lambda values
 # ------------------------------------------------------------------------------
-
-    def save_lambda_probdist(self, bip_set, parallel=True, write=True,
-                             filename=None, delim='\t', binary=True):
-        """Obtain and save the probablities of all possible values of the
-        Lambda motifs for the node set defined by bip_set. The matrix can
-        either be saved as human-readable ASCII or as a binary Numpy file.
-
-        :param bip_set: selects row-nodes (True) or column-nodes (False)
-        :type bip_set: bool
-        :param parallel: defines whether function should be run in parallel
-            True = use parallel processing,
-            False = don't use parallel processing
-        :type parallel: bool
-        :param write: if true, write the file to disk
-        :param filename: filename. If binary is true, it should end with '.npy',
-                        otherwise with '.csv'
-        :param delim: delimiter to use if file is saved as .csv
-        :param binary: if true, save as binary .npy file. Otherwise as .csv
-                        file
-        """
-        plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
-        self.get_lambda_probdist_q(plam_mat, bip_set, parallel=parallel)
-        if write:
-            if filename is None:
-                fname = 'bicm_lambda_probdist_layer_' + str(bip_set)
-                if binary:
-                    fname += '.npy'
-                else:
-                    fname += '.csv'
-            else:
-                fname = filename
-            self.save_matrix(self.probdist_mat, filename=fname, delim=delim,
-                             binary=binary)
-
-    def get_lambda_probdist_q(self, plam_mat, bip_set, parallel=True):
-        """Apply the Poisson Binomial distribution of each node couple on
-        all the possible number of nearest neighbors they can have, i.e.
-        the set [0, 1, ..., M], where M is the number of nodes in the opposite
-        bipartite layer.
-        """
-        if bip_set:
-            n = self.num_rows
-            m = self.num_columns
-        elif not bip_set:
-            n = self.num_columns
-            m = self.num_rows
-        else:
-            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
-            raise NameError(errmsg)
-
-        # the array must be sharable to be accessible by all processes
-        shared_array_base = multiprocessing.Array(
-                            ctypes.c_double, n * (n - 1) * (m + 1) / 2)
-        probdist_mat = np.frombuffer(shared_array_base.get_obj())
-        self.probdist_mat = probdist_mat.reshape(n * (n - 1) / 2, m + 1)
-        lambda_values = np.arange(m + 1)
-
-        # number of processes running in parallel has to be tested.
-        # good guess is multiprocessing.cpu_count() +- 1
-        if parallel:
-            numprocs = multiprocessing.cpu_count() - 1
-        else:
-            numprocs = 1
-        self.input_queue = multiprocessing.Queue()
-        self.output_queue = multiprocessing.Queue()
-
-        p_inqueue = multiprocessing.Process(target=self.probdist_add2inqueue,
-                                            args=(numprocs, plam_mat,
-                                                  lambda_values))
-        p_outqueue = multiprocessing.Process(target=self.probdist_outqueue2mat,
-                                             args=(numprocs, n))
-        ps = [multiprocessing.Process(target=self.probdist_process_worker,
-                                      args=()) for i in range(numprocs)]
-        # start queues
-        p_inqueue.start()
-        p_outqueue.start()
-        # start processes
-        for p in ps:
-            p.start()       # each process has an id, p.pid
-        p_inqueue.join()
-        for p in ps:
-            p.join()
-        p_outqueue.join()
-
-    def probdist_add2inqueue(self, nprocs, plam_mat, lambda_values):
-        """Add matrix entries to in-queue in order to calculate the probablity
-        distibutions.
-        """
-        n = plam_mat.shape[0]
-        # add tuples of matrix elements and indices to the input queue
-        for i in xrange(n):
-            for j in xrange(i + 1, n):
-                self.input_queue.put((i, j, plam_mat[i, j], lambda_values))
-        # add as many poison pills "STOP" to the queue as there are workers
-        for i in xrange(nprocs):
-            self.input_queue.put("STOP")
-
-    def probdist_process_worker(self):
-        """Take an element from the queue and calculate the probability of the
-         possible lambda values. Add the result to the out-queue.
-        """
-        # take elements from the queue as long as the element is not "STOP"
-        for tupl in iter(self.input_queue.get, "STOP"):
-            pb = PoiBin(tupl[2])
-            lambdaprobs = pb.pmf(tupl[3])
-            # add the result to the output queue
-            self.output_queue.put((tupl[0], tupl[1], lambdaprobs))
-        # once all the elements in the input queue have been dealt with, add a
-        # "STOP" to the output queue
-        self.output_queue.put("STOP")
-
-    def probdist_outqueue2mat(self, nprocs, mat_dim):
-        """Take the results from the out-queue and put them into the lambda
-        probability matrix.
-        """
-        # stop the work after having met nprocs times "STOP"
-        for work in xrange(nprocs):
-            for val in iter(self.output_queue.get, "STOP"):
-                i = val[0]
-                j = val[1]
-                k = self.triumat2flat_idx(i, j, mat_dim)
-                self.probdist_mat[k, :] = val[2]
+#
+#    def save_lambda_probdist(self, bip_set, parallel=True, write=True,
+#                             filename=None, delim='\t', binary=True):
+#        """Calculate the probabilities of all :math:`\\Lambda`-motif values.
+#
+#        For each node pair :math:`(i, j)` in ``bip_set``, calculate the
+#        probability of observing any possible number of :math:`\\Lambda`-motifs.
+#        The probability matrix can either be saved as a binary NumPy ``.npy``
+#        file or as a human-readable CSV file.
+#
+#        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
+#        :type bip_set: bool
+#        :param parallel: if ``True``, the calculation is executed in parallel;
+#                        if ``False``, only one process is started
+#        :type parallel: bool
+#        :param write: if ``True`` save the file to disk
+#        :type write: bool
+#        :param filename: filename. If binary is true, it should end with '.npy',
+#                        otherwise with '.csv'
+#        :type delim: str
+#        :param delim: delimiter between values in file
+#        :type delim: str
+#        :param binary: if ``True``, save as binary ``.npy``,
+#                     otherwise as CSV a file
+#        :type binary: bool
+#        :return pval_mat: array containing the p-values corresponding to the
+#                        :math:`\\Lambda`-values in ``nlam_mat``
+#        :rtype: numpy.array
+#        """
+#        plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
+#        self.get_lambda_probdist_q(plam_mat, bip_set, parallel=parallel)
+#        if write:
+#            if filename is None:
+#                fname = 'bicm_lambda_probdist_layer_' + str(bip_set)
+#                if binary:
+#                    fname += '.npy'
+#                else:
+#                    fname += '.csv'
+#            else:
+#                fname = filename
+#            self.save_matrix(self.probdist_mat, filename=fname, delim=delim,
+#                             binary=binary)
+#
+#    def get_lambda_probdist_q(self, plam_mat, bip_set, parallel=True):
+#        """Apply the Poisson Binomial distribution of each node couple on
+#        all the possible number of nearest neighbors they can have, i.e.
+#        the set [0, 1, ..., M], where M is the number of nodes in the opposite
+#        bipartite layer.
+#        """
+#        if bip_set:
+#            n = self.num_rows
+#            m = self.num_columns
+#        elif not bip_set:
+#            n = self.num_columns
+#            m = self.num_rows
+#        else:
+#            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
+#            raise NameError(errmsg)
+#
+#        # the array must be sharable to be accessible by all processes
+#        shared_array_base = multiprocessing.Array(
+#                            ctypes.c_double, n * (n - 1) * (m + 1) / 2)
+#        probdist_mat = np.frombuffer(shared_array_base.get_obj())
+#        self.probdist_mat = probdist_mat.reshape(n * (n - 1) / 2, m + 1)
+#        lambda_values = np.arange(m + 1)
+#
+#        # number of processes running in parallel has to be tested.
+#        # good guess is multiprocessing.cpu_count() +- 1
+#        if parallel:
+#            numprocs = multiprocessing.cpu_count() - 1
+#        else:
+#            numprocs = 1
+#        self.input_queue = multiprocessing.Queue()
+#        self.output_queue = multiprocessing.Queue()
+#
+#        p_inqueue = multiprocessing.Process(target=self.probdist_add2inqueue,
+#                                            args=(numprocs, plam_mat,
+#                                                  lambda_values))
+#        p_outqueue = multiprocessing.Process(target=self.probdist_outqueue2mat,
+#                                             args=(numprocs, n))
+#        ps = [multiprocessing.Process(target=self.probdist_process_worker,
+#                                      args=()) for i in range(numprocs)]
+#        # start queues
+#        p_inqueue.start()
+#        p_outqueue.start()
+#        # start processes
+#        for p in ps:
+#            p.start()       # each process has an id, p.pid
+#        p_inqueue.join()
+#        for p in ps:
+#            p.join()
+#        p_outqueue.join()
+#
+#    def probdist_add2inqueue(self, nprocs, plam_mat, lambda_values):
+#        """Add entries to in-queue to calculate the probablity distibutions.
+#
+#        """
+#        n = plam_mat.shape[0]
+#        # add tuples of matrix elements and indices to the input queue
+#        for i in xrange(n):
+#            for j in xrange(i + 1, n):
+#                self.input_queue.put((i, j, plam_mat[i, j], lambda_values))
+#        # add as many poison pills "STOP" to the queue as there are workers
+#        for i in xrange(nprocs):
+#            self.input_queue.put("STOP")
+#
+#    def probdist_process_worker(self):
+#        """Take an element from the queue and calculate the probability of the
+#         possible lambda values. Add the result to the out-queue.
+#        """
+#        # take elements from the queue as long as the element is not "STOP"
+#        for tupl in iter(self.input_queue.get, "STOP"):
+#            pb = PoiBin(tupl[2])
+#            lambdaprobs = pb.pmf(tupl[3])
+#            # add the result to the output queue
+#            self.output_queue.put((tupl[0], tupl[1], lambdaprobs))
+#        # once all the elements in the input queue have been dealt with, add a
+#        # "STOP" to the output queue
+#        self.output_queue.put("STOP")
+#
+#    def probdist_outqueue2mat(self, nprocs, mat_dim):
+#        """Take the results from the out-queue and put them into the lambda
+#        probability matrix.
+#        """
+#        # stop the work after having met nprocs times "STOP"
+#        for work in xrange(nprocs):
+#            for val in iter(self.output_queue.get, "STOP"):
+#                i = val[0]
+#                j = val[1]
+#                k = self.triumat2flat_idx(i, j, mat_dim)
+#                self.probdist_mat[k, :] = val[2]
 
 # ------------------------------------------------------------------------------
 # Auxiliary methods
 # ------------------------------------------------------------------------------
 
     @staticmethod
-    def triumat2flat_idx(idx_i, idx_j, n):
-        """Convert index couple (i, j) into index in one-dimensional array index
-        for the upper triangular part of a square matrix with dimension n. I.e.
-        idx_i runs from 0, ..., n and idx_j runs from idx_i + 1, ..., n
+    def triumat2flat_idx(i, j, n):
+        """Convert an matrix index couple to a flattened array index.
 
-        NB: the returned indices start from 0.
+        Given a square matrix of dimension :math:`n` and an index couple
+        :math:`(i, j)` *of the upper triangular part* of the matrix, the
+        function returns the index which the matrix element would have in a
+        flattened array.
+
+        .. note::
+            * :math:`i \\in [0, ..., n - 1]`
+            * :math:`j \\in [i + 1, ..., n - 1]`
+            * returned index :math:`\\in [0,\\, n (n - 1) / 2 - 1]`
+
+        :param i: row index
+        :type i: int
+        :param j: column index
+        :type j: int
+        :param n: dimension of the square matrix
+        :type n: int
+        :returns: flattened array index
+        :rtype: int
         """
-        return int((idx_i + 1) * n - (idx_i + 2) * (idx_i + 1) / 2.
-                   - (n - (idx_j + 1)) - 1)
+        return int((i + 1) * n - (i + 2) * (i + 1) / 2. - (n - (j + 1)) - 1)
+
+    def save_biadjacency(self, filename, delim='\t', binary=False):
+        """Save the biadjacendy matrix of the BiCM null model.
+
+        The matrix can either be saved as a binary NumPy ``.npy`` file or as a
+        human-readable CSV file.
+
+        .. note:: The relative path has to be provided in the filname, e.g.
+                *../data/biadjacency_matrix.csv*
+
+        :param filename: name of the output file
+        :type filename: str
+        :param delim: delimiter between values in file
+        :type delim: str
+        :param binary: if ``True``, save as binary ``.npy``,
+                     otherwise as CSV a file
+        :type binary: bool
+        """
+        self.save_matrix(self.adj_matrix, filename, delim, binary)
 
     @staticmethod
-    def get_main_dir(main_dir_name='bicm'):
-        """Return the absolute path to the main directory which contains the
-        folders "src" and "output".
-        Note that the default directory name is "bicm".
+    def save_matrix(mat, filename, delim='\t', binary=False):
+        """Save the matrix ``mat`` in the file ``filename``.
 
-        :param main_dir_name: name of the main directory of the program.
-        :type main_dir_name: string
-        """
-        s = os.getcwd()
-        dirpath = s[:s.index(main_dir_name) + len(main_dir_name) + 1]
-        return dirpath
+        The matrix can either be saved as a binary NumPy ``.npy`` file or as a
+        human-readable CSV file.
 
-    def save_matrix(self, mat, filename, delim='\t', binary=False):
-        """Save the input matrix. If binary is true, the matrix will be saved
-        in a .npy binary file. Otherwise in a csv-file.
+        .. note:: The relative path has to be provided in the filname, e.g.
+                *../data/pvalue_matrix.csv*
 
         :param mat: two-dimensional matrix
+        :type mat: numpy.array
         :param filename: name of the output file
-        :param delim: delimiter between values in file.
-        :param binary: if true, save as binary .npy file. Otherwise as .csv
-                        file
+        :type filename: str
+        :param delim: delimiter between values in file
+        :type delim: str
+        :param binary: if ``True``, save as binary ``.npy``,
+                     otherwise as CSV a file
+        :type binary: bool
         """
-        fname = ''.join([self.main_dir, '/output/', filename])
         if binary:
-            np.save(fname, mat)
+            np.save(filename, mat)
         else:
-            np.savetxt(fname, mat, delimiter=delim)
+            np.savetxt(filename, mat, delimiter=delim)
 
 ################################################################################
 # Main

@@ -1,4 +1,4 @@
-Test file for the module itn_bicm
+Test file for the module bicm
 ================================================================================
 
 Created on Tue Apr 4, 2016

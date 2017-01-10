@@ -1,0 +1,513 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API &mdash; Bipartite Configuration Model 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Bipartite Configuration Model 1.0 documentation" href="../index.html" />
+    <link rel="next" title="License" href="license.html" />
+    <link rel="prev" title="Parallel Computation" href="parallel.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="license.html" title="License"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="parallel.html" title="Parallel Computation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Bipartite Configuration Model 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="api">
+<span id="id1"></span><h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<p>API for the methods in the <tt class="docutils literal"><span class="pre">bicm</span></tt> module.</p>
+<dl class="class">
+<dt id="src.bicm.BiCM">
+<em class="property">class </em><tt class="descclassname">src.bicm.</tt><tt class="descname">BiCM</tt><big>(</big><em>bin_mat</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bipartite Configuration model for undirected binary bipartite networks.</p>
+<p>This class implements the Bipartite Configuration Model (BiCM), which can
+be used as a null model for the analysis of undirected and binary bipartite
+networks. The class provides methods to calculate the biadjacency matrix of
+the null model and to calculate node similarities in terms of p-values.</p>
+<dl class="method">
+<dt id="src.bicm.BiCM.add2inqueue">
+<tt class="descname">add2inqueue</tt><big>(</big><em>nprocs</em>, <em>plam_mat</em>, <em>nlam_mat</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.add2inqueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.add2inqueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add elements to the in-queue to calculate the p-values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nprocs</strong> (<em>int</em>) &#8211; number of processes running in parallel</li>
+<li><strong>plam_mat</strong> (<em>numpy.array (square matrix)</em>) &#8211; array containing the list of probabilities for the
+single observations of <span class="math">\(\Lambda\)</span>-motifs</li>
+<li><strong>nlam_mat</strong> (<em>numpy.array (square matrix)</em>) &#8211; array containing the observations of
+<span class="math">\(\Lambda\)</span>-motifs</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.check_input_matrix_is_binary">
+<tt class="descname">check_input_matrix_is_binary</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.check_input_matrix_is_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.check_input_matrix_is_binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check that the input matrix is binary, i.e. entries are 0 or 1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises AssertationError:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">raise an error if the input matrix is not
+binary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.equations">
+<tt class="descname">equations</tt><big>(</big><em>xx</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.equations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.equations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the equations of the log-likelihood maximization problem.</p>
+<p>Note that the equations for the row-nodes depend only on the
+column-nodes and vice versa, see reference mentioned in the header.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>xx</strong> (<em>numpy.array</em>) &#8211; Lagrange multipliers which have to be solved</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">equations to be solved (of the form <span class="math">\(f(x) = 0\)</span>)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.get_biadjacency_matrix">
+<tt class="descname">get_biadjacency_matrix</tt><big>(</big><em>xx</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.get_biadjacency_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.get_biadjacency_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the biadjacency matrix of the null model.</p>
+<p>The biadjacency matrix describes the BiCM null model, i.e. the optimal
+average graph <span class="math">\(&lt;G&gt;^*\)</span> with the average link probabilities
+<span class="math">\(&lt;G&gt;^*_{rc} = p_{rc}\)</span> ,
+<span class="math">\(p_{rc} = \frac{x_r \cdot x_c}{1.0 + x_r\cdot x_c}.\)</span>
+<span class="math">\(x\)</span> are the solutions of the equation system which has to be
+solved for the null model.
+Note that <span class="math">\(r\)</span> and <span class="math">\(c\)</span> are taken from opposite bipartite
+node sets, thus <span class="math">\(r \neq c\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>xx</strong> (<em>numpy.array</em>) &#8211; solutions of the equation system (Lagrange multipliers)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">biadjacency matrix of the null model</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.array</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises ValueError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">raise an error if <span class="math">\(p_{rc} &lt; 0\)</span> or
+<span class="math">\(p_{rc} &gt; 1\)</span> for any <span class="math">\(r, c\)</span></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.bicm.BiCM.get_lambda_motif_matrix">
+<em class="property">static </em><tt class="descname">get_lambda_motif_matrix</tt><big>(</big><em>mm</em>, <em>bip_set</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.get_lambda_motif_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.get_lambda_motif_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of <span class="math">\(\Lambda\)</span>-motifs as found in <tt class="docutils literal"><span class="pre">mm</span></tt>.</p>
+<p>Given the binary input matrix <tt class="docutils literal"><span class="pre">mm</span></tt>, count the number of
+<span class="math">\(\Lambda\)</span>-motifs between node couples of the bipartite layer
+specified by <tt class="docutils literal"><span class="pre">bip_set</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mm</strong> (<em>numpy.array</em>) &#8211; binary matrix</li>
+<li><strong>bip_set</strong> (<em>bool</em>) &#8211; selects row-nodes (<tt class="docutils literal"><span class="pre">True</span></tt>) or column-nodes (<tt class="docutils literal"><span class="pre">False</span></tt>)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">square matrix of observed <span class="math">\(\Lambda\)</span>-motifs</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.bicm.BiCM.get_plambda_matrix">
+<em class="property">static </em><tt class="descname">get_plambda_matrix</tt><big>(</big><em>biad_mat</em>, <em>bip_set</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.get_plambda_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.get_plambda_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the <span class="math">\(\Lambda\)</span>-motif probability tensor for <tt class="docutils literal"><span class="pre">bip_set</span></tt>.</p>
+<p>Given the biadjacency matrix <tt class="docutils literal"><span class="pre">biad_mat</span></tt>,
+<span class="math">\(\mathbf{M}_{rc} = p_{rc}\)</span>, which contains the probabilities of
+row-node <cite>r</cite> and column-node <cite>c</cite> being linked, the method returns the
+tensor</p>
+<p><span class="math">\(P(\Lambda)_{ij} = (M_{i\alpha_1} \cdot M_{j\alpha_1},
+M_{i\alpha_2} \cdot M_{j\alpha_2}, ...),\)</span></p>
+<p>where <span class="math">\((i, j)\)</span> are two nodes of the bipartite layer <tt class="docutils literal"><span class="pre">bip_set</span></tt>
+and <span class="math">\(\alpha_k\)</span> runs over the nodes in the opposite layer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>biad_mat</strong> (<em>numpy.array</em>) &#8211; biadjacency matrix</li>
+<li><strong>bip_set</strong> (<em>bool</em>) &#8211; selects row-nodes (<tt class="docutils literal"><span class="pre">True</span></tt>) or column-nodes (<tt class="docutils literal"><span class="pre">False</span></tt>)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.get_pvalues_q">
+<tt class="descname">get_pvalues_q</tt><big>(</big><em>plam_mat</em>, <em>nlam_mat</em>, <em>parallel=True</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.get_pvalues_q"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.get_pvalues_q" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the p-values of the observed <span class="math">\(\Lambda\)</span>-motifs.</p>
+<p>For each number of <span class="math">\(\Lambda\)</span>-motifs in <tt class="docutils literal"><span class="pre">nlam_mat</span></tt>,
+construct the Poisson Binomial distribution using the corresponding
+probabilities in <tt class="docutils literal"><span class="pre">plam_mat</span></tt> and calculate the p-value.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">the lower-triangular part of the output matrix is null since
+the matrix is symmetric by definition.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>plam_mat</strong> (<em>numpy.array (square matrix)</em>) &#8211; array containing the list of probabilities for the
+single observations of <span class="math">\(\Lambda\)</span>-motifs</li>
+<li><strong>nlam_mat</strong> (<em>numpy.array (square matrix)</em>) &#8211; array containing the observations of
+<span class="math">\(\Lambda\)</span>-motifs</li>
+<li><strong>parallel</strong> (<em>bool</em>) &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt>, the calculation is executed in parallel;
+if <tt class="docutils literal"><span class="pre">False</span></tt>, only one process is started</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Return pval_mat:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first">array containing the p-values corresponding to the
+<span class="math">\(\Lambda\)</span>-values in <tt class="docutils literal"><span class="pre">nlam_mat</span></tt></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.jacobian">
+<tt class="descname">jacobian</tt><big>(</big><em>xx</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.jacobian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.jacobian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a NumPy array with the Jacobian of the equation system.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>xx</strong> (<em>numpy.array</em>) &#8211; Lagrange multipliers which have to be solved</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Jacobian</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">2d numpy.array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.lambda_motifs">
+<tt class="descname">lambda_motifs</tt><big>(</big><em>bip_set</em>, <em>parallel=True</em>, <em>filename=None</em>, <em>delim='t'</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.lambda_motifs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.lambda_motifs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate and save the p-values of the <span class="math">\(\Lambda\)</span>-motifs.</p>
+<p>For each node couple in the bipartite layer specified by <tt class="docutils literal"><span class="pre">bip_set</span></tt>,
+<span class="math">\(\Lambda\)</span>-motifs and calculate the corresponding p-value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bip_set</strong> (<em>bool</em>) &#8211; select row-nodes (<tt class="docutils literal"><span class="pre">True</span></tt>) or column-nodes (<tt class="docutils literal"><span class="pre">False</span></tt>)</li>
+<li><strong>parallel</strong> (<em>bool</em>) &#8211; select whether the calculation of the p-values should
+be run in parallel (<tt class="docutils literal"><span class="pre">True</span></tt>) or not (<tt class="docutils literal"><span class="pre">False</span></tt>)</li>
+<li><strong>filename</strong> &#8211; name of the file which will contain the p-values</li>
+<li><strong>delim</strong> &#8211; delimiter between entries in file, default is tab</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.make_bicm">
+<tt class="descname">make_bicm</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.make_bicm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.make_bicm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the biadjacency matrix of the BiCM null model.</p>
+<p>Solve the log-likelihood maximization problem to obtain the BiCM
+null model which respects constraints on the the degree sequence of the
+input matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises AssertationError:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">raise an error if the adjacency matrix of the
+null model has different dimensions than the input matrix</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.outqueue2pval_mat">
+<tt class="descname">outqueue2pval_mat</tt><big>(</big><em>nprocs</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.outqueue2pval_mat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.outqueue2pval_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Put the results from the out-queue into the p-value matrix.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.pval_process_worker">
+<tt class="descname">pval_process_worker</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.pval_process_worker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.pval_process_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate one p-value and add the result to the out-queue.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.save_biadjacency">
+<tt class="descname">save_biadjacency</tt><big>(</big><em>filename</em>, <em>delim='t'</em>, <em>binary=False</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.save_biadjacency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.save_biadjacency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the biadjacendy matrix of the BiCM null model.</p>
+<p>The matrix can either be saved as a binary NumPy <tt class="docutils literal"><span class="pre">.npy</span></tt> file or as a
+human-readable CSV file.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The relative path has to be provided in the filname, e.g.
+<em>../data/biadjacency_matrix.csv</em></p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> (<em>str</em>) &#8211; name of the output file</li>
+<li><strong>delim</strong> (<em>str</em>) &#8211; delimiter between values in file</li>
+<li><strong>binary</strong> (<em>bool</em>) &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt>, save as binary <tt class="docutils literal"><span class="pre">.npy</span></tt>,
+otherwise as CSV a file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.bicm.BiCM.save_matrix">
+<em class="property">static </em><tt class="descname">save_matrix</tt><big>(</big><em>mat</em>, <em>filename</em>, <em>delim='t'</em>, <em>binary=False</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.save_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.save_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the matrix <tt class="docutils literal"><span class="pre">mat</span></tt> in the file <tt class="docutils literal"><span class="pre">filename</span></tt>.</p>
+<p>The matrix can either be saved as a binary NumPy <tt class="docutils literal"><span class="pre">.npy</span></tt> file or as a
+human-readable CSV file.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The relative path has to be provided in the filname, e.g.
+<em>../data/pvalue_matrix.csv</em></p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mat</strong> (<em>numpy.array</em>) &#8211; two-dimensional matrix</li>
+<li><strong>filename</strong> (<em>str</em>) &#8211; name of the output file</li>
+<li><strong>delim</strong> (<em>str</em>) &#8211; delimiter between values in file</li>
+<li><strong>binary</strong> (<em>bool</em>) &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt>, save as binary <tt class="docutils literal"><span class="pre">.npy</span></tt>,
+otherwise as CSV a file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.set_degree_seq">
+<tt class="descname">set_degree_seq</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.set_degree_seq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.set_degree_seq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the node degree sequence of the input matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">node degree sequence [degrees row-nodes, degrees column-nodes]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy.array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.solve_equations">
+<tt class="descname">solve_equations</tt><big>(</big><em>eq</em>, <em>jac</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.solve_equations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.solve_equations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the system of equations of the maximum log-likelihood problem.</p>
+<p>The system of equations is solved using <tt class="docutils literal"><span class="pre">scipy</span></tt>&#8216;s root function. The
+solutions correspond to the Lagrange multipliers</p>
+<blockquote>
+<div><span class="math">\(x_i = \exp(-\theta_i).\)</span></div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>eq</strong> (<em>numpy.array</em>) &#8211; system of equations (<span class="math">\(f(x) = 0\)</span>)</li>
+<li><strong>jac</strong> (<em>numpy.ndarray</em>) &#8211; Jacobian of the system</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">solution of the equation system</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.bicm.BiCM.test_average_degrees">
+<tt class="descname">test_average_degrees</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.test_average_degrees"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.test_average_degrees" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test the constraints on the node degrees.</p>
+<p>Assert that the degree sequence of the solved BiCM null model graph
+corresponds to the degree sequence of the input graph.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.bicm.BiCM.triumat2flat_idx">
+<em class="property">static </em><tt class="descname">triumat2flat_idx</tt><big>(</big><em>i</em>, <em>j</em>, <em>n</em><big>)</big><a class="reference internal" href="../_modules/src/bicm.html#BiCM.triumat2flat_idx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.bicm.BiCM.triumat2flat_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an matrix index couple to a flattened array index.</p>
+<p>Given a square matrix of dimension <span class="math">\(n\)</span> and an index couple
+<span class="math">\((i, j)\)</span> <em>of the upper triangular part</em> of the matrix, the
+function returns the index which the matrix element would have in a
+flattened array.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li><span class="math">\(i \in [0, ..., n - 1]\)</span></li>
+<li><span class="math">\(j \in [i + 1, ..., n - 1]\)</span></li>
+<li>returned index <span class="math">\(\in [0,\, n (n - 1) / 2 - 1]\)</span></li>
+</ul>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>i</strong> (<em>int</em>) &#8211; row index</li>
+<li><strong>j</strong> (<em>int</em>) &#8211; column index</li>
+<li><strong>n</strong> (<em>int</em>) &#8211; dimension of the square matrix</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">flattened array index</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">int</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parallel.html"
+                        title="previous chapter">Parallel Computation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="license.html"
+                        title="next chapter">License</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/source/src.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="license.html" title="License"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="parallel.html" title="Parallel Computation"
+             >previous</a> |</li>
+        <li><a href="../index.html">Bipartite Configuration Model 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Mika Straka.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

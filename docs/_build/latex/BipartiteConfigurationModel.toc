@@ -1,0 +1,18 @@
+\select@language {english}
+\contentsline {chapter}{\numberline {1}How to cite}{3}{chapter.1}
+\contentsline {section}{\numberline {1.1}References}{3}{section.1.1}
+\contentsline {chapter}{\numberline {2}Getting Started}{5}{chapter.2}
+\contentsline {section}{\numberline {2.1}Overview}{5}{section.2.1}
+\contentsline {subsection}{\numberline {2.1.1}Dependencies}{5}{subsection.2.1.1}
+\contentsline {section}{\numberline {2.2}BiCM Quickstart}{6}{section.2.2}
+\contentsline {subsection}{\numberline {2.2.1}Obtaining the biadjacency matrix of the BiCM null model}{6}{subsection.2.2.1}
+\contentsline {subsection}{\numberline {2.2.2}Calculating the p-values of the node similarities}{6}{subsection.2.2.2}
+\contentsline {section}{\numberline {2.3}Tutorial}{7}{section.2.3}
+\contentsline {section}{\numberline {2.4}Testing}{8}{section.2.4}
+\contentsline {section}{\numberline {2.5}Parallel Computation}{8}{section.2.5}
+\contentsline {section}{\numberline {2.6}API}{8}{section.2.6}
+\contentsline {section}{\numberline {2.7}License}{12}{section.2.7}
+\contentsline {section}{\numberline {2.8}Contact}{12}{section.2.8}
+\contentsline {chapter}{\numberline {3}Indices and tables}{13}{chapter.3}
+\contentsline {chapter}{Bibliography}{15}{chapter*.23}
+\contentsline {chapter}{Index}{17}{section*.28}

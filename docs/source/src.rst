@@ -5,7 +5,7 @@ API
 
 API for the methods in the ``bicm`` module.
 
-.. autoclass:: src.bicm.BiCM
+.. autoclass:: bicm.BiCM
     :members:
     :undoc-members:
     :show-inheritance:

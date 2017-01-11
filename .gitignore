@@ -3,3 +3,7 @@
 *TODO*
 output/*.csv
 .idea
+docs/_build
+docs/_static
+docs/_template
+

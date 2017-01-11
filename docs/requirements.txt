@@ -1,6 +1,6 @@
 #
 ####### requirements.txt ####### 
-multiprocessing == 0.70.4
+multiprocess == 0.70.4
 scipy == 0.17.1
 numpy == 1.11.1
 

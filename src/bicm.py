@@ -13,12 +13,12 @@ Description:
     undirected bipartite networks [Saracco2015]_.
 
     Given the biadjacency matrix of a bipartite graph in the form of a binary
-    array as input, the module calculates the biadjacency matrix for the
-    corresponding ensemble average graph :math:`<G>^*`, where the matrix
-    entries correspond to the link probabilities :math:`<G>^*_{rc} = p_{rc}`
-    between nodes of the two distinct bipartite node sets. Subsequently, one
-    can calculate the p-values of the node similarities for nodes in the same
-    bipartite layer [Saracco2015]_.
+    array as input, the module allows the user to calculate the biadjacency
+    matrix of the ensemble average graph :math:`<G>^*` of the BiCM null model,
+    where the matrix entries correspond to the link probabilities
+    :math:`<G>^*_{rc} = p_{rc}` between nodes of the two distinct bipartite
+    node sets. Subsequently, one can calculate the p-values of the node
+    similarities for nodes in the same bipartite layer [Saracco2016]_.
 
 Usage:
     Be ``mat`` a two-dimensional binary NumPy array. The nodes of the two
@@ -37,9 +37,10 @@ Usage:
 
     The biadjacency matrix of the BiCM null model can be saved in *<filename>*::
 
-        >>> cm.save_matrix(cm.adj_matrix, filename=<filename>, delim='\\t')
+        >>> cm.save_matrix(cm.adj_matrix, filename=<filename>)
 
-    By default, the file is saved in a human-readable CSV format. The
+    By default, the file is saved in a human-readable CSV format with tab
+    delimiters, which can be changed using the keyword ``delim``. The
     information can also be saved as a binary NumPy file ``.npy`` by using::
 
         >>> cm.save_matrix(cm.adj_matrix, filename=<filename>, binary=True)
@@ -98,7 +99,7 @@ class BiCM:
     This class implements the Bipartite Configuration Model (BiCM), which can
     be used as a null model for the analysis of undirected and binary bipartite
     networks. The class provides methods to calculate the biadjacency matrix of
-    the null model and to calculate node similarities in terms of p-values.
+    the null model and to quantify node similarities in terms of p-values.
     """
 
     def __init__(self, bin_mat):
@@ -678,8 +679,8 @@ class BiCM:
         :type filename: str
         :param delim: delimiter between values in file
         :type delim: str
-        :param binary: if ``True``, save as binary ``.npy``,
-                     otherwise as CSV a file
+        :param binary: if ``True``, save as binary ``.npy``, otherwise as a
+            CSV file
         :type binary: bool
         """
         if binary:

@@ -307,7 +307,9 @@ class BiCM:
             be run in parallel (``True``) or not (``False``)
         :type parallel: bool
         :param filename: name of the file which will contain the p-values
+        :type filename: str
         :param delim: delimiter between entries in file, default is tab
+        :type delim: str
         """
         plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
         nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
@@ -364,7 +366,6 @@ class BiCM:
         :type mm: numpy.array
         :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
-
         :returns: square matrix of observed :math:`\\Lambda`-motifs
         :rtype: numpy.array
         """

@@ -135,6 +135,9 @@ class BiCM:
 
         :returns: node degree sequence [degrees row-nodes, degrees column-nodes]
         :rtype: numpy.array
+
+        :raise AssertionError: raise an error if the length of the returned
+            degree sequence does not correspond to the total number of nodes
         """
         dseq = np.empty(self.num_rows + self.num_columns)
         dseq[self.num_rows:] = np.squeeze(np.sum(self.bin_mat, axis=0))
@@ -264,7 +267,7 @@ class BiCM:
     def test_average_degrees(self):
         """Test the constraints on the node degrees.
 
-        Assert that the degree sequence of the solved BiCM null model graph
+        Check that the degree sequence of the solved BiCM null model graph
         corresponds to the degree sequence of the input graph.
         """
         ave_deg_columns = np.squeeze(np.sum(self.adj_matrix, axis=0))
@@ -340,6 +343,8 @@ class BiCM:
         :type biad_mat: numpy.array
         :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
+        :returns: :math:`\\Lambda`-motif probability tensor for ``bip_set``
+        :rtype: numpy.array
         """
         if (type(bip_set) == bool) and bip_set:
             mm_mat = biad_mat
@@ -369,6 +374,9 @@ class BiCM:
         :type bip_set: bool
         :returns: square matrix of observed :math:`\\Lambda`-motifs
         :rtype: numpy.array
+
+        :raise NameError: raise an error if the parameter ``bip_set`` is
+            neither ``True`` nor ``False``
         """
         if (type(bip_set) == bool) and bip_set:
             nlam_mat = np.dot(mm, np.transpose(mm))
@@ -389,7 +397,8 @@ class BiCM:
         probabilities in ``plam_mat`` and calculate the p-value.
 
         .. note::
-            the lower-triangular part of the output matrix is null since
+            * the p-values are saved in the matrix ``self.pval_mat``.
+            * the lower-triangular part of the output matrix is null since
             the matrix is symmetric by definition.
 
         :param plam_mat: array containing the list of probabilities for the
@@ -401,9 +410,6 @@ class BiCM:
         :param parallel: if ``True``, the calculation is executed in parallel;
                         if ``False``, only one process is started
         :type parallel: bool
-        :return pval_mat: array containing the p-values corresponding to the
-                        :math:`\\Lambda`-values in ``nlam_mat``
-        :rtype: numpy.array
         """
         n = nlam_mat.shape[0]
         # the array must be sharable to be accessible by all processes

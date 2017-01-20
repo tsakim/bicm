@@ -124,7 +124,7 @@ class BiCM:
     def check_input_matrix_is_binary(self):
         """Check that the input matrix is binary, i.e. entries are 0 or 1.
 
-        :raise AssertationError: raise an error if the input matrix is not
+        :raise AssertionError: raise an error if the input matrix is not
             binary
         """
         assert np.all(np.logical_or(self.bin_mat == 0, self.bin_mat == 1)), \
@@ -149,7 +149,7 @@ class BiCM:
         null model which respects constraints on the the degree sequence of the
         input matrix.
 
-        :raise AssertationError: raise an error if the adjacency matrix of the
+        :raise AssertionError: raise an error if the adjacency matrix of the
             null model has different dimensions than the input matrix
         """
         # print "+++Generating bipartite configuration model..."

@@ -16,9 +16,11 @@ and applications to user-movie and international trade databases
 \[Saracco2016\], \[Straka2016\].
 
 ## Author
+
 Mika J. Straka
 
 ## Version and Documentation
+
 The newest version of the module can be found on
 [https://github.com/tsakim/bicm](https://github.com/tsakim/bicm).
 

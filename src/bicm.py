@@ -149,7 +149,7 @@ class BiCM:
         """Create the biadjacency matrix of the BiCM null model.
 
         Solve the log-likelihood maximization problem to obtain the BiCM
-        null model which respects constraints on the the degree sequence of the
+        null model which respects constraints on the degree sequence of the
         input matrix.
 
         :raise AssertionError: raise an error if the adjacency matrix of the
@@ -174,7 +174,9 @@ class BiCM:
         The system of equations is solved using ``scipy``'s root function. The
         solutions correspond to the Lagrange multipliers
 
-            :math:`x_i = \exp(-\\theta_i).`
+        .. math::
+
+            x_i = \exp(-\\theta_i).
 
         :param eq: system of equations (:math:`f(x) = 0`)
         :type eq: numpy.array
@@ -211,7 +213,7 @@ class BiCM:
         :param xx: Lagrange multipliers which have to be solved
         :type xx: numpy.array
         :returns: Jacobian
-        :rtype: 2d numpy.array
+        :rtype: numpy.array
         """
         jac = np.zeros((self.dim, self.dim))
         for i in xrange(0, self.num_rows):
@@ -656,8 +658,9 @@ class BiCM:
         The matrix can either be saved as a binary NumPy ``.npy`` file or as a
         human-readable CSV file.
 
-        .. note:: The relative path has to be provided in the filname, e.g.
-                *../data/biadjacency_matrix.csv*
+        .. note::
+            The relative path has to be provided in the filename, e.g.
+            *../data/biadjacency_matrix.csv*
 
         :param filename: name of the output file
         :type filename: str
@@ -676,8 +679,9 @@ class BiCM:
         The matrix can either be saved as a binary NumPy ``.npy`` file or as a
         human-readable CSV file.
 
-        .. note:: The relative path has to be provided in the filname, e.g.
-                *../data/pvalue_matrix.csv*
+        .. note::
+            The relative path has to be provided in the filename, e.g.
+            *../data/pvalue_matrix.csv*
 
         :param mat: two-dimensional matrix
         :type mat: numpy.array

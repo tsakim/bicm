@@ -42,7 +42,7 @@ Dependencies
 * `poibin <https://github.com/tsakim/poibin>`_ Module for the Poisson Binomial
   probability distribution 
 * `scipy <https://www.scipy.org/>`_
-* `numpy <www.numpy.org>`_
+* `numpy <http://www.numpy.org>`_
 * `multiprocessing <https://docs.python.org/2/library/multiprocessing.html>`_
 * `ctypes <https://docs.python.org/2/library/ctypes.html>`_
 * `doctest <https://docs.python.org/2/library/doctest.html>`_ For unit testing

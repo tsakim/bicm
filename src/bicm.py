@@ -45,8 +45,8 @@ Usage:
 
         >>> cm.save_biadjacency(filename=<filename>, binary=True)
 
-    The names of the files should reflect the format, i.e. end with ``.csv`` or
-    ``.npy``.
+    If the file is not binary, it should end with, e.g., ``.csv``. If it is
+    binary instead, NumPy automatically attaches the ending ``.npy``.
 
     In order to analyze the similarity of the row-layer nodes and to save the
     p-values of the corresponding :math:`\Lambda`-motifs, i.e. of the number of
@@ -663,7 +663,8 @@ class BiCM:
 
         .. note::
             The relative path has to be provided in the filename, e.g.
-            *../data/biadjacency_matrix.csv*
+            *../data/pvalue_matrix.csv*. If ``binary==True``, NumPy
+            automatically appends the format ending ``.npy`` to the file.
 
         :param filename: name of the output file
         :type filename: str
@@ -684,7 +685,8 @@ class BiCM:
 
         .. note::
             The relative path has to be provided in the filename, e.g.
-            *../data/pvalue_matrix.csv*
+            *../data/pvalue_matrix.csv*. If ``binary==True``, NumPy
+            automatically appends the format ending ``.npy`` to the file.
 
         :param mat: two-dimensional matrix
         :type mat: numpy.array

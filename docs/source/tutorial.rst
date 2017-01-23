@@ -13,14 +13,14 @@ network will be the following:
 
 The structure of the network can be caught in the `biadjacency matrix
 <https://en.wikipedia.org/w/index.php?title=Adjacency_matrix&oldid=751840428#Adjacency_matrix_of_a_bipartite_graph>`_.
-In our case, the matrix is 
+In our case, the matrix is
 
 .. math::
     \left[
     \begin{matrix}
         1 & 1 & 0 & 0 \\
         0 & 1 & 1 & 1 \\
-        0 & 1 & 0 & 1 
+        0 & 1 & 0 & 1
     \end{matrix}
     \right]
 
@@ -59,7 +59,7 @@ Note that the default delimiter is ``\t``. Other delimiters such as ``,`` or
 ``.csv`` or as a binary NumPy ``.npy`` file, see :func:`save_biadjacency` in
 the :ref:`api`. In our example graph, the BiCM matrix should be::
 
-    >>> cm.adj_matrix 
+    >>> cm.adj_matrix
     array([[ 0.21602144,  0.99855239,  0.21602144,  0.56873952],
            [ 0.56845256,  0.99969684,  0.56845256,  0.86309703],
            [ 0.21602144,  0.99855239,  0.21602144,  0.56873952]])
@@ -69,7 +69,7 @@ between the corresponding row- and column-nodes. If we take two nodes in the
 same layer, we can count the number of common neighbors that they share in the
 original input network and calculate the probability of observing the same of
 more common neighbors according to the BiCM [Saracco2016]_. This corresponds to
-calculating the p-values for a right-sided hypothesis testing. 
+calculating the p-values for a right-sided hypothesis testing.
 
 The calculation of the p-values is computation and memory intensive and should
 be performed in parallel, see :ref:`parallel` for details. It can be executed
@@ -86,7 +86,7 @@ and ``<filename>`` is the name of the output file.
 Having calculated the p-values, it is possible to perform a multiple hypothesis
 testing with FDR control and to obtain an unbiased monopartite projection of
 the original bipartite network. In the projection, only statistically
-significant edges are kept. 
+significant edges are kept.
 
 For further information on the post-processing and the monopartite projections,
 please refer to [Saracco2016]_.

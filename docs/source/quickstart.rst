@@ -39,7 +39,7 @@ By default, the file is saved in a human-readable CSV format. The information ca
 
     >>> cm.save_biadjacency(filename=<filename>, binary=True)
 
-The names of the files should reflect the format, i.e. end with ``.csv`` or ``.npy``.
+If the file is not binary, it should end with, e.g., ``.csv``. If it is binary instead, NumPy automatically attaches the ending ``.npy``.
 
 Calculating the p-values of the node similarities
 --------------------------------------------------------------------------------

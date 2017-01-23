@@ -401,7 +401,7 @@ class BiCM:
         .. note::
             * the p-values are saved in the matrix ``self.pval_mat``.
             * the lower-triangular part of the output matrix is null since
-            the matrix is symmetric by definition.
+              the matrix is symmetric by definition.
 
         :param plam_mat: array containing the list of probabilities for the
                         single observations of :math:`\\Lambda`-motifs

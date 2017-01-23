@@ -38,9 +38,7 @@ Let's get started by importing the necessary modules::
 The biadjacency matrix of our toy network will be saved in the two-dimensional
 NumPy array ``mat``::
 
-    >>> mat = np.array([[1, 1, 0, 0], 
-                        [0, 1, 1, 1],
-                        [0, 1, 0, 1]])
+    >>> mat = np.array([[1, 1, 0, 0], [0, 1, 1, 1], [0, 1, 0, 1]])
 
 and we initialize the Bipartite Configuration Model with::
 
@@ -62,9 +60,9 @@ Note that the default delimiter is ``\t``. Other delimiters such as ``,`` or
 the :ref:`api`. In our example graph, the BiCM matrix should be::
 
     >>> cm.adj_matrix 
-    >>> array([[ 0.21602144,  0.99855239,  0.21602144,  0.56873952],
-               [ 0.56845256,  0.99969684,  0.56845256,  0.86309703],
-               [ 0.21602144,  0.99855239,  0.21602144,  0.56873952]])
+    array([[ 0.21602144,  0.99855239,  0.21602144,  0.56873952],
+           [ 0.56845256,  0.99969684,  0.56845256,  0.86309703],
+           [ 0.21602144,  0.99855239,  0.21602144,  0.56873952]])
 
 Each entry in the matrix corresponds to the probability of observing a link
 between the corresponding row- and column-nodes. If we take two nodes in the

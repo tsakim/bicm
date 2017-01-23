@@ -6,7 +6,7 @@ If you want to get started right away, go ahead and follow the summary below.  T
 #. given an input matrix, create the biadjacency matrix of the BiCM null model
 #. perform a statistical validation of the similarities of nodes in the same
    layer
-  
+
 The validated node similarities can be used to obtain an unbiased monopartite projection of the bipartite network, as illustrated in [Saracco2016]_.
 
 For more detailed explanations of the methods, please refer to [Saracco2016]_, the :ref:`tutorial` and the :ref:`api`.
@@ -22,7 +22,7 @@ ordered along the columns and rows, respectively. In the algorithm, the two
 layers are identified by the boolean values ``True`` for the **row-nodes** and
 ``False`` for the **column-nodes**.
 
-Import the module and initialize the Bipartite Configuration Model:: 
+Import the module and initialize the Bipartite Configuration Model::
 
     >>> from src.bicm import BiCM
     >>> cm = BiCM(bin_mat=mat)
@@ -33,11 +33,13 @@ To create the biadjacency matrix of the BiCM, use::
 
 The biadjacency matrix of the BiCM null model can be saved in *<filename>*::
 
-    >>> cm.save_matrix(cm.adj_matrix, filename=<filename>, delim='\t')
+    >>> cm.save_biadjacency(filename=<filename>, delim='\t')
 
 By default, the file is saved in a human-readable CSV format. The information can also be saved as a binary NumPy file ``.npy`` by using::
 
-    >>> cm.save_matrix(cm.adj_matrix, filename=<filename>, binary=True)
+    >>> cm.save_biadjacency(filename=<filename>, binary=True)
+
+The names of the files should reflect the format, i.e. end with ``.csv`` or ``.npy``.
 
 Calculating the p-values of the node similarities
 --------------------------------------------------------------------------------

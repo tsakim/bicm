@@ -37,13 +37,16 @@ Usage:
 
     The biadjacency matrix of the BiCM null model can be saved in *<filename>*::
 
-        >>> cm.save_matrix(cm.adj_matrix, filename=<filename>)
+        >>> cm.save_biadjacency(filename=<filename>, delim='\t')
 
     By default, the file is saved in a human-readable CSV format with tab
     delimiters, which can be changed using the keyword ``delim``. The
     information can also be saved as a binary NumPy file ``.npy`` by using::
 
-        >>> cm.save_matrix(cm.adj_matrix, filename=<filename>, binary=True)
+        >>> cm.save_biadjacency(filename=<filename>, binary=True)
+
+    The names of the files should reflect the format, i.e. end with ``.csv`` or
+    ``.npy``.
 
     In order to analyze the similarity of the row-layer nodes and to save the
     p-values of the corresponding :math:`\Lambda`-motifs, i.e. of the number of

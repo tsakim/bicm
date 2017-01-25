@@ -34,7 +34,6 @@ Usage:
     array([[ 1.,  0.],
            [ 1.,  1.],
            [ 1.,  1.]])
-
     >>> td = np.array([[1, 0], [0, 1]])
     >>> cm = BiCM(td)
     >>> cm.make_bicm()
@@ -168,16 +167,16 @@ Usage:
     True
 
 # BiCM.get_lambda_probdist ----------------------------------------------------- 
-
-    >>> td = np.array([[1, 0], [0, 1], [0, 1]])
-    >>> bb = BiCM(td)
-    >>> bb.make_bicm()
-    >>> bb.save_lambda_probdist(bip_set=True, parallel=True, write=False)
-    >>> bb.probdist_mat
-    array([[ 0.49382716,  0.45679012,  0.04938272],
-           [ 0.49382716,  0.45679012,  0.04938272],
-           [ 0.49382716,  0.45679012,  0.04938272]])
-
+#
+#    >>> td = np.array([[1, 0], [0, 1], [0, 1]])
+#    >>> bb = BiCM(td)
+#    >>> bb.make_bicm()
+#    >>> bb.save_lambda_probdist(bip_set=True, parallel=True, write=False)
+#    >>> bb.probdist_mat
+#    array([[ 0.49382716,  0.45679012,  0.04938272],
+#           [ 0.49382716,  0.45679012,  0.04938272],
+#           [ 0.49382716,  0.45679012,  0.04938272]])
+#
 # BiCM.trium2flas_idx ---------------------------------------------------------- 
 
     >>> td = np.array([[1, 0], [0, 1], [0, 1]])

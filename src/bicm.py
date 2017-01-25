@@ -113,7 +113,7 @@ class BiCM:
                 and the nodes of the other layer along the columns.
         :type bin_mat: numpy.array
         """
-        self.bin_mat = np.array(bin_mat)
+        self.bin_mat = np.array(bin_mat, dtype=np.int8)
         self.check_input_matrix_is_binary()
         [self.num_rows, self.num_columns] = self.bin_mat.shape
         self.dseq = self.set_degree_seq()

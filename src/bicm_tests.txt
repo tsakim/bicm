@@ -81,7 +81,15 @@ Usage:
     array([[ 0.03846154,  0.04761905,  0.07407407],
            [ 0.07407407,  0.09090909,  0.13793103]])
 
-# BiCM.get_plambda_matrix -----------------------------------------------------
+# BiCM.get_triup_dim -----------------------------------------------------------  
+
+    >>> cm = BiCM(np.array([[1, 0, 1], [1, 1, 1]]))
+    >>> cm.get_triup_dim(False)
+    3
+    >>> cm.get_triup_dim(True)
+    1
+
+# BiCM.get_plambda_matrix ------------------------------------------------------
 
     Test the function:
     >>> binmat = np.array([[1, 0], [1, 1]])
@@ -177,9 +185,26 @@ Usage:
 #           [ 0.49382716,  0.45679012,  0.04938272],
 #           [ 0.49382716,  0.45679012,  0.04938272]])
 #
-# BiCM.trium2flas_idx ---------------------------------------------------------- 
+# BiCM.trium2flat_idx ---------------------------------------------------------- 
+# BiCM.flat2triumat_idx -------------------------------------------------------- 
 
     >>> td = np.array([[1, 0], [0, 1], [0, 1]])
     >>> bb = BiCM(td)
     >>> bb.triumat2flat_idx(3, 5, 8)
     19
+    >>> for k in range(3): print bb.get_row_idx(k, 3)
+    0
+    0
+    1
+    >>> for k in range(3): print bb.get_column_idx(k, 3, bb.get_row_idx(k, 3))
+    1
+    2
+    2
+    >>> for k in range(45):
+    ...     ij = bb.flat2triumat_idx(k, 10)
+    ...     assert bb.triumat2flat_idx(ij[0], ij[1], 10) == k
+    >>> for i in range(10):
+    ...     for j in range(i + 1, 10):
+    ...         k = bb.triumat2flat_idx(i, j, 10)
+    ...         assert (i, j) == bb.flat2triumat_idx(k, 10)
+

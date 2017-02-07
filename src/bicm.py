@@ -320,6 +320,13 @@ class BiCM:
         :param delim: delimiter between entries in file, default is tab
         :type delim: str
         """
+        n = get_triup_dim(bip_set)
+
+#        [rowidx, colidx] = slice_idx_range()
+#        for i in range(len(rowidx)):
+#            for j in range(len(colidx)):
+#                pass
+#
         plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
         nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
         self.get_pvalues_q(plam_mat, nlam_mat, parallel)
@@ -491,6 +498,46 @@ class BiCM:
                 j = val[1]
                 self.pval_mat[i, j] = val[2]
 
+    def get_triup_dim(self, bip_set):
+        """Return the number of possible couples in ``bip_set``.
+        
+        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
+        :type bip_set: bool
+        :returns: return the number of node couple combinations corresponding 
+        to the layer ``bip_set
+        :rtype: int 
+
+        :raise NameError: raise an error if the parameter ``bip_set`` is
+            neither ``True`` nor ``False``
+        """
+        if bip_set:
+            return self.num_rows * (self.num_rows - 1) / 2
+        elif not bip_set:
+            return self.num_columns * (self.num_columns - 1) / 2
+        else:
+            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
+            raise NameError(errmsg)
+
+    def slice_idx_range(self):
+        """Slice the matrix dimensions into subsections.
+
+        :returns: row- and column indices of submatrices
+        :rtype: list
+        """
+        if self.bin_mat.size > 100:
+            bar = lambda x: int(0.2 * self.bin_mat.shape[0] * x)
+            foo = lambda x: int(0.2 * self.bin_mat.shape[1] * x)
+            rowidx = [bar(i) for i in range(
+                self.bin_mat.shape[0]) if bar(i) < self.bin_mat.shape[0]]
+            colidx = [foo(i) for i in range(
+                self.bin_mat.shape[1]) if foo(i) < self.bin_mat.shape[1]]
+        else:
+            rowidx = [0]
+            colidx = [0]
+        rowidx.append(self.bin_mat.shape[0])
+        colidx.append(self.bin_mat.shape[1])
+        return [rowidx, colidx]
+
 # ------------------------------------------------------------------------------
 # Probability distributions for Lambda values
 # ------------------------------------------------------------------------------
@@ -654,6 +701,65 @@ class BiCM:
         :rtype: int
         """
         return int((i + 1) * n - (i + 2) * (i + 1) / 2. - (n - (j + 1)) - 1)
+
+    def flat2triumat_idx(self, k, n):
+        """Convert an array index to the index couple of a triangular matrix.
+
+        ``k`` is the index of an array of length :math:`frac{n(n - 1)}{2}`,
+        which contains the elements of an upper triangular matrix of dimension
+        ``n`` excluding the diagonal. The function returns the index couple
+        :math:`(i, j)` that corresponds to the entry ``k`` of the flat array.
+
+        .. note::
+            * :math:`k \\in [0,\\, n (n - 1) / 2 - 1]`
+            * returned indices:
+                * :math:`i \\in [0, ..., n - 1]`
+                * :math:`j \\in [i + 1, ..., n - 1]`
+
+        :param k: flattened array index
+        :type k: int
+        :param n: dimension of the square matrix
+        :type n: int
+        :returns: matrix index tuple (row, column)
+        :rtype: tuple
+        """
+        i = self.get_row_idx(k, n)
+        j = self.get_column_idx(k, n, i)
+        return (i, j)
+
+    @staticmethod
+    def get_row_idx(k, n):
+        """Return the row of element ``k`` in a matrix of dimension ``n``.
+    
+        Only the upper triangular elements of the matrix are considered in the 
+        enumeration.
+        
+        :param k: flattened array index
+        :type k: int
+        :param n: dimension of the square matrix
+        :type n: int
+        :returns: row index
+        :rtype: int
+        """
+        return n - 2 - int(0.5 * np.sqrt(-8 * k + 4 * n * (n - 1) - 7) - 0.5)
+
+    @staticmethod
+    def get_column_idx(k, n, r):
+        """Return the column of element ``k`` in a matrix of dimension ``n``.
+    
+        Only the upper triangular elements of the matrix are considered in the 
+        enumeration.
+        
+        :param k: flattened array index
+        :type k: int
+        :param n: dimension of the square matrix
+        :type n: int
+        :param r: row index of the element
+        :type r: int
+        :returns: column index
+        :rtype: int
+        """
+        return k + 1 + r * (3 - 2 * n + r) / 2
 
     def save_biadjacency(self, filename, delim='\t', binary=False):
         """Save the biadjacendy matrix of the BiCM null model.

@@ -267,31 +267,31 @@ Usage:
     >>> adj = np.random.random(size=td.size).reshape(td.shape)
     >>> bb = BiCM(td)
     >>> n = bb.get_triup_dim(True)
-    >>> pmat = np.ones(shape=(n, bb.bin_mat.shape[1])) * (99)
+    >>> plam = np.ones(shape=(n, bb.bin_mat.shape[1])) * (99)
     >>> m = 0;
     >>> for i in range(adj.shape[0]):
     ...     for j in range(i + 1, adj.shape[0]):
-    ...         pmat[m, :] = adj[i, :] * adj[j, :] 
+    ...         plam[m, :] = adj[i, :] * adj[j, :] 
     ...         m += 1
     >>> k1 = 0 #np.random.randint(low=0, high=n/2)
     >>> k2 = 4 #np.random.randint(low=n/2, high=n)
     >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
-    >>> assert np.all(pmat[k1:k2] == pl)
+    >>> assert np.all(plam[k1:k2] == pl)
 
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = np.random.randint(low=n/2, high=n - 1)
     >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
-    >>> assert np.all(pmat[k1:k2] == pl)
+    >>> assert np.all(plam[k1:k2] == pl)
 
     >>> k1 = 0
     >>> k2 = n - 1 
     >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
-    >>> assert np.all(pmat[k1:] == pl)
+    >>> assert np.all(plam[k1:] == pl)
 
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = n - 1 
     >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
-    >>> assert np.all(pmat[k1:] == pl)
+    >>> assert np.all(plam[k1:] == pl)
 
 
     >>> r = np.random.randint(low=5, high=15)
@@ -300,13 +300,49 @@ Usage:
     >>> adj = np.random.random(size=td.size).reshape(td.shape)
     >>> bb = BiCM(td)
     >>> n = bb.get_triup_dim(True)
-    >>> pmat = np.ones(shape=(n, bb.bin_mat.shape[1])) * (99)
+    >>> plam = np.ones(shape=(n, bb.bin_mat.shape[1])) * (99)
     >>> m = 0;
     >>> for i in range(adj.shape[0]):
     ...     for j in range(i + 1, adj.shape[0]):
-    ...         pmat[m, :] = adj[i, :] * adj[j, :] 
+    ...         plam[m, :] = adj[i, :] * adj[j, :] 
     ...         m += 1
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = np.random.randint(low=n/2, high=n - 1)
     >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
-    >>> assert np.all(pmat[k1:k2] == pl)
+    >>> assert np.all(plam[k1:k2] == pl)
+
+# BiCM.lambda_motifs_loop ------------------------------------------------------ 
+
+    >>> r = np.random.randint(low=5, high=6)
+    >>> c = np.random.randint(low=10, high=11)
+    >>> td = np.random.randint(low=0, high=2, size=r * c).reshape(r, c) 
+    >>> adj = np.random.random(size=td.size).reshape(td.shape)
+    >>> bb = BiCM(td)
+    >>> n = bb.get_triup_dim(True)
+    >>> nl = np.dot(td, td.T)[np.triu_indices(n=td.shape[0], k=1)]
+    >>> plam = np.ones(shape=(n, bb.bin_mat.shape[1])) * (99)
+    >>> m = 0;
+    >>> for i in range(adj.shape[0]):
+    ...     for j in range(i + 1, adj.shape[0]):
+    ...         plam[m, :] = adj[i, :] * adj[j, :] 
+    ...         m += 1
+
+    >>> nl2, pl2, pv = bb.lambda_motifs_loop(True, adj)
+    >>> pv0 = bb.lambda_motifs(True, adj)
+    >>> assert np.all(pv0[np.triu_indices_from(pv0, k=1)] == pv)
+
+#    >>> assert len(nl) == len(nl2)
+#    >>> assert np.all(nl == nl2)
+#    >>> assert len(plam) == len(pl2)
+#    >>> assert np.all(plam == pl2)
+
+#    >>> print np.all(nl == nl2)
+
+#    >>> td = np.random.randint(low=0, high=2, size=123000).reshape(123, 1000) 
+#    >>> bb = BiCM(td)
+#    >>> n = bb.get_triup_dim(True)
+#    >>> nl = np.dot(td, td.T)[np.triu_indices(n=td.shape[0], k=1)]
+#    >>> k1 = np.random.randint(low=0, high=n/2)
+#    >>> k2 = np.random.randint(low=n/2, high=n)
+#    >>> nl2 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2, bb.bin_mat.shape[0])
+#    >>> assert np.all((nl[k1:k2] == nl2))

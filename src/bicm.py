@@ -113,7 +113,7 @@ class BiCM:
                 and the nodes of the other layer along the columns.
         :type bin_mat: numpy.array
         """
-        self.bin_mat = np.array(bin_mat, dtype=np.int8)
+        self.bin_mat = np.array(bin_mat, dtype=np.int64)
         self.check_input_matrix_is_binary()
         [self.num_rows, self.num_columns] = self.bin_mat.shape
         self.dseq = self.set_degree_seq()
@@ -320,13 +320,17 @@ class BiCM:
         :param delim: delimiter between entries in file, default is tab
         :type delim: str
         """
-        n = get_triup_dim(bip_set)
-
+#        n = get_triup_dim(bip_set)
+#        kk = [i * n / 5 for i in range(6))]
+#        for i in range(len(kk) - 1):
+#            k = kk[i]
+#            nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set, kk[i], kk[i+1])
 #        [rowidx, colidx] = slice_idx_range()
 #        for i in range(len(rowidx)):
 #            for j in range(len(colidx)):
 #                pass
-#
+#np.dot(mm[i1, :], mm[j1:j2, :].T)
+
         plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
         nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
         self.get_pvalues_q(plam_mat, nlam_mat, parallel)
@@ -335,6 +339,130 @@ class BiCM:
         else:
             fname = filename
         self.save_matrix(self.pval_mat, filename=fname, delim=delim)
+
+    def get_lambda_motif_block(self, mm, k1, k2, ndim):
+        """Return a subset of :math:`\\Lambda`-motifs as found in ``mm``.
+
+        Given the binary input matrix ``mm``, count the number of
+        :math:`\\Lambda`-motifs of all the node couples specified by the
+        interval :math:`\[k1, k2\[`.
+
+        .. note:
+            The :math:`\\Lambda`-motifs are counted between the **row-nodes**
+            of the input matrix ``mm``.
+            If :math:`k2 \equiv \\frac{ndim * (ndim - 1)}{2}`, the interval 
+            becomes :math:`\[k1, k2\]`.
+
+        :param mm: binary matrix
+        :type mm: numpy.array
+        :param k1: lower interval limit 
+        :type k1: int
+        :param k2: upper interval limit 
+        :type k2: int
+        :param ndim: number of distinct row-nodes, i.e. ``mm.shape[0]``
+        :type ndim: int
+        :returns: array of observed :math:`\\Lambda`-motifs
+        :rtype: numpy.array
+        """
+        # if the upper limit is the largest possible index, i.e. corresponds to
+        # the node couple (ndim - 2, ndim - 1), where node indices start from 0, 
+        # include the result 
+        if k2 == (ndim * (ndim - 1) / 2 - 1):
+            flag = 1
+        else:
+            flag = 0
+        aux = np.ones(shape=(k2 - k1 + flag, ))* (-1) # -1 as a test
+        [i1, j1] = self.flat2triumat_idx(k1, ndim)
+        [i2, j2] = self.flat2triumat_idx(k2, ndim)
+
+        # limits are in the same row
+        if i1 == i2:
+            aux[:k2 - k1] = np.dot(mm[i1, :], mm[j1:j2, :].T)
+        # limits are in different rows
+        else:
+            k = 0
+            # get values for lower limit row
+            fi = np.dot(mm[i1, :], mm[j1:, :].T)
+            aux[:len(fi)] = fi
+            k += len(fi)
+            # get values for intermediate rows
+            for i in range(i1 + 1, i2):
+                mid = np.dot(mm[i, :], mm[i + 1:, :].T)
+                aux[k : k + len(mid)] = mid
+                k += len(mid)
+            # get values for upper limit row
+            if flag == 1:
+                aux[-1] = np.dot(mm[ndim - 2, :], mm[ndim - 1, :].T)
+            else:
+                la =  np.dot(mm[i2, :], mm[i2 + 1 : j2, :].T)
+                aux[k:] = la
+        return aux
+
+    def get_plambda_block(self, mm, k1, k2, ndim, ndim2):
+        """Return a subset :math:`\\Lambda`-motif probability matrix of ``mm``.
+
+        Given the biadjacency matrix ``biad_mat``,
+        :math:`\\mathbf{M}_{rc} = p_{rc}`, which contains the probabilities of
+        row-node `r` and column-node `c` being linked, the method returns the
+        matrix 
+
+        :math:`P(\\Lambda)_{ij} = (M_{i\\alpha_1} \\cdot M_{j\\alpha_1},
+        M_{i\\alpha_2} \\cdot M_{j\\alpha_2}, ...),`
+
+        for all the node couples in the interval :math:`\[k1, k2\[`.
+        :math:`(i, j)` are two **row-nodes** of ``mm`` and
+        :math:`\\alpha_k` runs over the nodes in the opposite layer.
+
+        .. note:
+            The probabilities are calculated between the **row-nodes** of the
+            input matrix ``mm``.  
+            If :math:`k2 \equiv \\frac{ndim * (ndim - 1)}{2}`, the interval
+            becomes :math:`\[k1, k2\]`.
+
+        :param mm: biadjacency matrix
+        :type mm: numpy.array
+        :param k1: lower interval limit 
+        :type k1: int
+        :param k2: upper interval limit 
+        :type k2: int
+        :param ndim: number of distinct row-nodes, i.e. ``mm.shape[0]``
+        :type ndim: int
+        :param ndim: number of distinct column-nodes, i.e. ``mm.shape[1]``
+        :type ndim: int
+        :returns: :math:`\\Lambda`-motif probability matrix 
+        :rtype: numpy.array
+        """
+        # if the upper limit is the largest possible index, i.e. corresponds to
+        # the node couple (ndim - 2, ndim - 1), where node indices start from 0, 
+        # include the result 
+        if k2 == (ndim * (ndim - 1) / 2 - 1):
+            flag = 1
+        else:
+            flag = 0
+        paux = np.ones(shape=(k2 - k1 + flag, ndim2), dtype='float') * (-0.1)
+        [i1, j1] = self.flat2triumat_idx(k1, ndim)
+        [i2, j2] = self.flat2triumat_idx(k2, ndim)
+
+        if i1 == i2:
+            paux[:k2 - k1, :] = mm[i1, ] * mm[j1:j2, :]
+        else:
+            k = 0
+            # get values for lower limit row 
+            fi = mm[i1, :] * mm[j1:, :]
+            paux[:len(fi), :] = fi
+            k += len(fi)
+            # get values for intermediate rows
+            for i in range(i1 + 1, i2):
+                mid = mm[i, :] * mm[i + 1:, :]
+                paux[k : k + len(mid), :] = mid
+                k += len(mid)
+            # get values for upper limit row
+            if flag == 1:
+                paux[-1, :] = mm[ndim - 2, :] * mm[ndim - 1, :] 
+            else:
+                la = mm[i2, :] * mm[i2 + 1:j2, :] 
+                paux[k:, :] = la
+        return paux
 
     @staticmethod
     def get_plambda_matrix(biad_mat, bip_set):
@@ -518,25 +646,35 @@ class BiCM:
             errmsg = "'" + str(bip_set) + "' " + 'not supported.'
             raise NameError(errmsg)
 
-    def slice_idx_range(self):
-        """Slice the matrix dimensions into subsections.
+    def split_range(self, n, m=5):
+        """Split the interval :math:`\[0, \ldots, n\]` in ``m`` equal parts.
 
-        :returns: row- and column indices of submatrices
-        :rtype: list
+        :param n: upper limit of the range
+        :type n: int
+        :param m: number of part in which range should be split 
+        :type n: int
         """
-        if self.bin_mat.size > 100:
-            bar = lambda x: int(0.2 * self.bin_mat.shape[0] * x)
-            foo = lambda x: int(0.2 * self.bin_mat.shape[1] * x)
-            rowidx = [bar(i) for i in range(
-                self.bin_mat.shape[0]) if bar(i) < self.bin_mat.shape[0]]
-            colidx = [foo(i) for i in range(
-                self.bin_mat.shape[1]) if foo(i) < self.bin_mat.shape[1]]
-        else:
-            rowidx = [0]
-            colidx = [0]
-        rowidx.append(self.bin_mat.shape[0])
-        colidx.append(self.bin_mat.shape[1])
-        return [rowidx, colidx]
+        return [i * n / m for i in range(m)]
+
+#    def slice_idx_range(self):
+#        """Slice the matrix dimensions into subsections.
+#
+#        :returns: row- and column indices of submatrices
+#        :rtype: list
+#        """
+#        if self.bin_mat.size > 100:
+#            bar = lambda x: int(0.2 * self.bin_mat.shape[0] * x)
+#            foo = lambda x: int(0.2 * self.bin_mat.shape[1] * x)
+#            rowidx = [bar(i) for i in range(
+#                self.bin_mat.shape[0]) if bar(i) < self.bin_mat.shape[0]]
+#            colidx = [foo(i) for i in range(
+#                self.bin_mat.shape[1]) if foo(i) < self.bin_mat.shape[1]]
+#        else:
+#            rowidx = [0]
+#            colidx = [0]
+#        rowidx.append(self.bin_mat.shape[0])
+#        colidx.append(self.bin_mat.shape[1])
+#        return [rowidx, colidx]
 
 # ------------------------------------------------------------------------------
 # Probability distributions for Lambda values

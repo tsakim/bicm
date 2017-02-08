@@ -235,18 +235,18 @@ Usage:
     >>> nl = np.dot(td, td.T)[np.triu_indices(n=td.shape[0], k=1)]
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = np.random.randint(low=n/2, high=n)
-    >>> nl2 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2, bb.bin_mat.shape[0])
+    >>> nl2 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2)
     >>> assert np.all((nl[k1:k2] == nl2))
     >>> k1 = 0 
     >>> k2 = n - 1 
-    >>> nl3 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2, bb.bin_mat.shape[0])
+    >>> nl3 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2)
     >>> if not len(nl) ==  len(nl3):
     ...     print n, len(nl),  len(nl3)
     >>> assert np.all(nl[k1:k2] == nl3[k1:k2])
 
     >>> k1 = np.random.randint(low=0, high=n - 1)
     >>> k2 = n - 1 
-    >>> nl3 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2, bb.bin_mat.shape[0])
+    >>> nl3 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2)
     >>> if not np.all(nl[k1:] == nl3):
     ...     print k1, k2, len(nl[k1:]), len(nl3)
 
@@ -258,7 +258,7 @@ Usage:
     >>> nl = np.dot(td, td.T)[np.triu_indices(n=td.shape[0], k=1)]
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = np.random.randint(low=n/2, high=n)
-    >>> nl2 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2, bb.bin_mat.shape[0])
+    >>> nl2 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2)
     >>> assert np.all((nl[k1:k2] == nl2))
 
 # BiCM.get_plambda_block ------------------------------------------------------- 
@@ -275,22 +275,22 @@ Usage:
     ...         m += 1
     >>> k1 = 0 #np.random.randint(low=0, high=n/2)
     >>> k2 = 4 #np.random.randint(low=n/2, high=n)
-    >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
+    >>> pl = bb.get_plambda_block(adj, k1, k2)
     >>> assert np.all(plam[k1:k2] == pl)
 
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = np.random.randint(low=n/2, high=n - 1)
-    >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
+    >>> pl = bb.get_plambda_block(adj, k1, k2)
     >>> assert np.all(plam[k1:k2] == pl)
 
     >>> k1 = 0
     >>> k2 = n - 1 
-    >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
+    >>> pl = bb.get_plambda_block(adj, k1, k2)
     >>> assert np.all(plam[k1:] == pl)
 
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = n - 1 
-    >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
+    >>> pl = bb.get_plambda_block(adj, k1, k2)
     >>> assert np.all(plam[k1:] == pl)
 
 
@@ -308,13 +308,13 @@ Usage:
     ...         m += 1
     >>> k1 = np.random.randint(low=0, high=n/2)
     >>> k2 = np.random.randint(low=n/2, high=n - 1)
-    >>> pl = bb.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1])
+    >>> pl = bb.get_plambda_block(adj, k1, k2)
     >>> assert np.all(plam[k1:k2] == pl)
 
 # BiCM.lambda_motifs_loop ------------------------------------------------------ 
 
     >>> r = np.random.randint(low=5, high=6)
-    >>> c = np.random.randint(low=10, high=11)
+    >>> c = np.random.randint(low=8, high=9)
     >>> td = np.random.randint(low=0, high=2, size=r * c).reshape(r, c) 
     >>> adj = np.random.random(size=td.size).reshape(td.shape)
     >>> bb = BiCM(td)
@@ -327,8 +327,12 @@ Usage:
     ...         plam[m, :] = adj[i, :] * adj[j, :] 
     ...         m += 1
 
-    >>> nl2, pl2, pv = bb.lambda_motifs_loop(True, adj)
+    >>> nl2, pl2, pv = bb.NEW_lambda_motifs(bip_set=True, adj=adj)
     >>> pv0 = bb.lambda_motifs(True, adj)
+    >>> assert np.all(pv0[np.triu_indices_from(pv0, k=1)] == pv)
+
+    >>> nl2, pl2, pv = bb.NEW_lambda_motifs(bip_set=False, adj=adj, binary=True)
+    >>> pv0 = bb.lambda_motifs(False, adj)
     >>> assert np.all(pv0[np.triu_indices_from(pv0, k=1)] == pv)
 
 #    >>> assert len(nl) == len(nl2)

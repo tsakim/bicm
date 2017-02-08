@@ -303,38 +303,60 @@ class BiCM:
 # ------------------------------------------------------------------------------
 # Lambda motifs
 # ------------------------------------------------------------------------------
-    def lambda_motifs_loop(self, bip_set, adj):
+
+    def NEW_lambda_motifs(self, bip_set, adj, parallel=True, filename=None, 
+            delim='\t', binary=False):
         """ 
 
         :param adj: PROVISORISCH, spaeter self.adj_mat
-        Dann auch plam und nlam nicht als (n,...) initiieren sonder nur im 
-        for loop
+        transponiere der matrix according to bip_set
         """
-        bip_set = True
+        if (type(bip_set) == bool) and bip_set:
+            biad_mat = adj
+            bin_mat = self.bin_mat
+        elif (type(bip_set) == bool) and not bip_set:
+            biad_mat = np.transpose(adj)
+            bin_mat = np.transpose(self.bin_mat)
+        else:
+            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
+            raise NameError(errmsg)
+
         n = self.get_triup_dim(bip_set)
-        kk = self.split_range(n, m=5)
         pval = np.ones(shape=(n, ), dtype='float') * (-0.1)
+
+        # if the dimension of the network is too large, split the calculations
+        # of the p-values in ``m`` intervals to avoid memory allocation errors
+#        if n > 1000:
+#            kk = self.split_range(n, m=5)
+#        else:
+#            kk = [0, n - 2]
+        kk = self.split_range(n, m=5)
+        # calculate p-values for index intervals
         for i in range(len(kk) - 1):
             k1 = kk[i]
             k2 = kk[i + 1]
-            nlam = self.get_lambda_motif_block(self.bin_mat, k1, k2,
-                    self.bin_mat.shape[0])    
-            plam = self.get_plambda_block(adj, k1, k2, adj.shape[0],
-                    adj.shape[1]) 
+            nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
+            plam = self.get_plambda_block(biad_mat, k1, k2)
             pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2)
             pval[k1:k2] = pv
         # last interval
         k1 = kk[len(kk) - 1]
         k2 = n - 1 
-        nlam = self.get_lambda_motif_block(self.bin_mat, k1, k2,
-                self.bin_mat.shape[0])    
-        plam = self.get_plambda_block(adj, k1, k2, adj.shape[0], adj.shape[1]) 
+        nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
+        plam = self.get_plambda_block(biad_mat, k1, k2)
         # for the last entry we have to INCLUDE k2, thus k2 + 1
         pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2 + 1)
         pval[k1:] = pv
         # check that all p-values have been calculated
 #        assert np.all(pval >= 0) and np.all(pval <= 1)
-
+        if filename is None:
+            fname = 'p_values_' + str(bip_set)
+            if not binary:
+                fname +=  '.csv'
+        else:
+            fname = filename
+        self.save_matrix(pval, filename=fname, delim=delim,
+                         binary=binary)
         return nlam, plam, pval
 
 
@@ -342,6 +364,8 @@ class BiCM:
             delim='\t'): 
             
         """ NOTA: ADJ IS ONLY HERE FOR TESTINg!!!
+        has to be removed!! also return value
+
         Calculate and save the p-values of the :math:`\\Lambda`-motifs.
 
         For each node couple in the bipartite layer specified by ``bip_set``,
@@ -357,17 +381,6 @@ class BiCM:
         :param delim: delimiter between entries in file, default is tab
         :type delim: str
         """
-#        n = get_triup_dim(bip_set)
-#        kk = [i * n / 5 for i in range(6))]
-#        for i in range(len(kk) - 1):
-#            k = kk[i]
-#            nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set, kk[i], kk[i+1])
-#        [rowidx, colidx] = slice_idx_range()
-#        for i in range(len(rowidx)):
-#            for j in range(len(colidx)):
-#                pass
-#np.dot(mm[i1, :], mm[j1:j2, :].T)
-
 #        plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
         plam_mat = self.get_plambda_matrix(adj, bip_set)
         nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
@@ -379,7 +392,7 @@ class BiCM:
 #        self.save_matrix(self.pval_mat, filename=fname, delim=delim)
         return self.pval_mat
 
-    def get_lambda_motif_block(self, mm, k1, k2, ndim):
+    def get_lambda_motif_block(self, mm, k1, k2):
         """Return a subset of :math:`\\Lambda`-motifs as found in ``mm``.
 
         Given the binary input matrix ``mm``, count the number of
@@ -398,11 +411,10 @@ class BiCM:
         :type k1: int
         :param k2: upper interval limit 
         :type k2: int
-        :param ndim: number of distinct row-nodes, i.e. ``mm.shape[0]``
-        :type ndim: int
         :returns: array of observed :math:`\\Lambda`-motifs
         :rtype: numpy.array
         """
+        ndim = mm.shape[0]
         # if the upper limit is the largest possible index, i.e. corresponds to
         # the node couple (ndim - 2, ndim - 1), where node indices start from 0, 
         # include the result 
@@ -410,14 +422,14 @@ class BiCM:
             flag = 1
         else:
             flag = 0
-        aux = np.ones(shape=(k2 - k1 + flag, ))* (-1) # -1 as a test
+        aux = np.ones(shape=(k2 - k1 + flag, )) * (-1) # -1 as a test
         [i1, j1] = self.flat2triumat_idx(k1, ndim)
         [i2, j2] = self.flat2triumat_idx(k2, ndim)
 
-        # limits are in the same row
+        # if limits have the same row index
         if i1 == i2:
             aux[:k2 - k1] = np.dot(mm[i1, :], mm[j1:j2, :].T)
-        # limits are in different rows
+        # if limits have different row indices
         else:
             k = 0
             # get values for lower limit row
@@ -437,8 +449,8 @@ class BiCM:
                 aux[k:] = la
         return aux
 
-    def get_plambda_block(self, mm, k1, k2, ndim, ndim2):
-        """Return a subset :math:`\\Lambda`-motif probability matrix of ``mm``.
+    def get_plambda_block(self, biad_mat, k1, k2):
+        """Return a subset of the :math:`\\Lambda` probability matrix.
 
         Given the biadjacency matrix ``biad_mat``,
         :math:`\\mathbf{M}_{rc} = p_{rc}`, which contains the probabilities of
@@ -449,57 +461,56 @@ class BiCM:
         M_{i\\alpha_2} \\cdot M_{j\\alpha_2}, ...),`
 
         for all the node couples in the interval :math:`\[k1, k2\[`.
-        :math:`(i, j)` are two **row-nodes** of ``mm`` and
+        :math:`(i, j)` are two **row-nodes** of ``biad_mat`` and
         :math:`\\alpha_k` runs over the nodes in the opposite layer.
 
         .. note:
             The probabilities are calculated between the **row-nodes** of the
-            input matrix ``mm``.  
+            input matrix ``biad_mat``.  
             If :math:`k2 \equiv \\frac{ndim * (ndim - 1)}{2}`, the interval
             becomes :math:`\[k1, k2\]`.
 
-        :param mm: biadjacency matrix
-        :type mm: numpy.array
+        :param biad_mat: biadjacency matrix
+        :type biad_mat: numpy.array
         :param k1: lower interval limit 
         :type k1: int
         :param k2: upper interval limit 
         :type k2: int
-        :param ndim: number of distinct row-nodes, i.e. ``mm.shape[0]``
-        :type ndim: int
-        :param ndim: number of distinct column-nodes, i.e. ``mm.shape[1]``
-        :type ndim: int
         :returns: :math:`\\Lambda`-motif probability matrix 
         :rtype: numpy.array
         """
+        [ndim1, ndim2] = biad_mat.shape
         # if the upper limit is the largest possible index, i.e. corresponds to
         # the node couple (ndim - 2, ndim - 1), where node indices start from 0, 
         # include the result 
-        if k2 == (ndim * (ndim - 1) / 2 - 1):
+        if k2 == (ndim1 * (ndim1 - 1) / 2 - 1):
             flag = 1
         else:
             flag = 0
         paux = np.ones(shape=(k2 - k1 + flag, ndim2), dtype='float') * (-0.1)
-        [i1, j1] = self.flat2triumat_idx(k1, ndim)
-        [i2, j2] = self.flat2triumat_idx(k2, ndim)
+        [i1, j1] = self.flat2triumat_idx(k1, ndim1)
+        [i2, j2] = self.flat2triumat_idx(k2, ndim1)
 
+        # if limits have the same row index
         if i1 == i2:
-            paux[:k2 - k1, :] = mm[i1, ] * mm[j1:j2, :]
+            paux[:k2 - k1, :] = biad_mat[i1, ] * biad_mat[j1:j2, :]
+        # if limits have different indices 
         else:
             k = 0
             # get values for lower limit row 
-            fi = mm[i1, :] * mm[j1:, :]
+            fi = biad_mat[i1, :] * biad_mat[j1:, :]
             paux[:len(fi), :] = fi
             k += len(fi)
             # get values for intermediate rows
             for i in range(i1 + 1, i2):
-                mid = mm[i, :] * mm[i + 1:, :]
+                mid = biad_mat[i, :] * biad_mat[i + 1:, :]
                 paux[k : k + len(mid), :] = mid
                 k += len(mid)
             # get values for upper limit row
             if flag == 1:
-                paux[-1, :] = mm[ndim - 2, :] * mm[ndim - 1, :] 
+                paux[-1, :] = biad_mat[ndim1 - 2, :] * biad_mat[ndim1 - 1, :] 
             else:
-                la = mm[i2, :] * mm[i2 + 1:j2, :] 
+                la = biad_mat[i2, :] * biad_mat[i2 + 1:j2, :] 
                 paux[k:, :] = la
         return paux
 
@@ -597,10 +608,7 @@ class BiCM:
         # the array must be sharable to be accessible by all processes
         shared_array_base = multiprocessing.Array(ctypes.c_double, n)
         pval_mat = np.frombuffer(shared_array_base.get_obj())
-#        print 'pv', len(pval_mat), n
-#        self.pval_mat = None
-#        self.pval = pval_mat
-#        print 'pvalmat', self.pval_mat.shape
+
         # number of processes running in parallel has to be tested.
         # good guess is multiprocessing.cpu_count() +- 1
         if parallel:
@@ -611,7 +619,7 @@ class BiCM:
             numprocs = 1
         self.input_queue = multiprocessing.Queue()
         self.output_queue = multiprocessing.Queue()
-#
+
         p_inqueue = multiprocessing.Process(target=self.NEW_add2inqueue,
                                             args=(numprocs, plam_mat, nlam_mat,
                                                 k1, k2))
@@ -619,7 +627,7 @@ class BiCM:
                                              args=(numprocs, pval_mat))
         ps = [multiprocessing.Process(target=self.NEW_pval_process_worker,
                                       args=()) for i in range(numprocs)]
-       # start queues
+        # start queues
         p_inqueue.start()
         p_outqueue.start()
         # start processes
@@ -629,7 +637,6 @@ class BiCM:
         for p in ps:
             p.join()
         p_outqueue.join()
-#        pval_mat += k1
         return pval_mat
 
     def NEW_add2inqueue(self, nprocs, plam_mat, nlam_mat, k1, k2):
@@ -647,11 +654,8 @@ class BiCM:
         n = len(plam_mat)
         # add tuples of matrix elements and indices to the input queue
         for k in xrange(k1, k2):
-#            print plam_mat[k - k1, :]
-            self.input_queue.put((k - k1, plam_mat[k - k1, :], nlam_mat[k - k1]))
-#        for i in xrange(n):
-#            for j in xrange(i + 1, n):
-#                self.input_queue.put((i, j, plam_mat[i, j], nlam_mat[i, j]))
+            self.input_queue.put((k - k1, plam_mat[k - k1, :], 
+                                  nlam_mat[k - k1]))
 
         # add as many poison pills "STOP" to the queue as there are workers
         for i in xrange(nprocs):
@@ -663,7 +667,7 @@ class BiCM:
         for tupl in iter(self.input_queue.get, "STOP"):
             pb = PoiBin(tupl[1])
             pv = pb.pval(int(tupl[2]))
-#            # add the result to the output queue
+            # add the result to the output queue
             self.output_queue.put((tupl[0], pv))
         # once all the elements in the input queue have been dealt with, add a
         # "STOP" to the output queue
@@ -675,10 +679,7 @@ class BiCM:
         for work in xrange(nprocs):
             for val in iter(self.output_queue.get, "STOP"):
                 k = val[0]
-#                print val[1]
-#                pvalmat[k] = k #val[1]
                 pvalmat[k] = val[1]
-#                self.pval_mat[k] = val[1]
 
 
 ################################################################################

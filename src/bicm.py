@@ -307,9 +307,36 @@ class BiCM:
     def NEW_lambda_motifs(self, bip_set, adj, parallel=True, filename=None, 
             delim='\t', binary=False):
         """ 
-
         :param adj: PROVISORISCH, spaeter self.adj_mat
-        transponiere der matrix according to bip_set
+
+        Calculate and save the p-values of the :math:`\\Lambda`-motifs.
+
+        For each node couple in the bipartite layer specified by ``bip_set``,
+        the p-values of the corresponding :math:`\\Lambda`-motifs are
+        calculated based on the biadjacency matrix of the BiCM null model.
+
+        The results can be saved either as a binary or a human-readable file.
+
+        .. note:
+            The output consists of one array of p-values to keep memory usage
+            low. If the bipartite layer ``bip_set`` contains ``n`` nodes,
+            this means that the array will contain :math:`\\binom{n}{2}``
+            entries. The indices of the nodes corresponding to entry ``k``
+            in the array can be reconstructed using the method
+            ``flat2_triumat_idx(k, n)``.
+
+        :param bip_set: select row-nodes (``True``) or column-nodes (``False``)
+        :type bip_set: bool
+        :param parallel: select whether the calculation of the p-values should
+            be run in parallel (``True``) or not (``False``)
+        :type parallel: bool
+        :param filename: name of the file which will contain the p-values
+        :type filename: str
+        :param delim: delimiter between entries in file, default is tab
+        :type delim: str
+        :param binary: if ``True``, the file will be saved in the binary 
+            NumPy format ``.npy``, otherwise as ``.csv``
+        :type binary: bool
         """
         if (type(bip_set) == bool) and bip_set:
             biad_mat = adj
@@ -323,30 +350,37 @@ class BiCM:
 
         n = self.get_triup_dim(bip_set)
         pval = np.ones(shape=(n, ), dtype='float') * (-0.1)
-
-        # if the dimension of the network is too large, split the calculations
-        # of the p-values in ``m`` intervals to avoid memory allocation errors
-#        if n > 1000:
-#            kk = self.split_range(n, m=5)
-#        else:
-#            kk = [0, n - 2]
-        kk = self.split_range(n, m=5)
-        # calculate p-values for index intervals
-        for i in range(len(kk) - 1):
-            k1 = kk[i]
-            k2 = kk[i + 1]
+    
+        # handle layers of dimension 2 separately
+        if n == 1:
+            nlam = np.dot(bin_mat[0, :], bin_mat[1, :].T)
+            plam = biad_mat[0, :] * biad_mat[1, :]
+            pb = PoiBin(plam)
+            pval[0] = pb.pval(nlam)
+        else:
+            # if the dimension of the network is too large, split the
+            # calculations # of the p-values in ``m`` intervals to avoid memory
+            # allocation errors
+            if n > 100:
+                kk = self.split_range(n, m=4)
+            else:
+                kk = [0]
+            # calculate p-values for index intervals
+            for i in range(len(kk) - 1):
+                k1 = kk[i]
+                k2 = kk[i + 1]
+                nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
+                plam = self.get_plambda_block(biad_mat, k1, k2)
+                pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2)
+                pval[k1:k2] = pv
+            # last interval
+            k1 = kk[len(kk) - 1]
+            k2 = n - 1 
             nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
             plam = self.get_plambda_block(biad_mat, k1, k2)
-            pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2)
-            pval[k1:k2] = pv
-        # last interval
-        k1 = kk[len(kk) - 1]
-        k2 = n - 1 
-        nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
-        plam = self.get_plambda_block(biad_mat, k1, k2)
-        # for the last entry we have to INCLUDE k2, thus k2 + 1
-        pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2 + 1)
-        pval[k1:] = pv
+            # for the last entry we have to INCLUDE k2, thus k2 + 1
+            pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2 + 1)
+            pval[k1:] = pv
         # check that all p-values have been calculated
 #        assert np.all(pval >= 0) and np.all(pval <= 1)
         if filename is None:
@@ -357,7 +391,7 @@ class BiCM:
             fname = filename
         self.save_matrix(pval, filename=fname, delim=delim,
                          binary=binary)
-        return nlam, plam, pval
+#        return nlam, plam, pval
 
 
     def lambda_motifs(self, bip_set, adj, parallel=True, filename=None,
@@ -402,7 +436,7 @@ class BiCM:
         .. note:
             The :math:`\\Lambda`-motifs are counted between the **row-nodes**
             of the input matrix ``mm``.
-            If :math:`k2 \equiv \\frac{ndim * (ndim - 1)}{2}`, the interval 
+            If :math:`k2 \equiv \\binom{mm.shape[0]}{2}`, the interval 
             becomes :math:`\[k1, k2\]`.
 
         :param mm: binary matrix
@@ -467,7 +501,7 @@ class BiCM:
         .. note:
             The probabilities are calculated between the **row-nodes** of the
             input matrix ``biad_mat``.  
-            If :math:`k2 \equiv \\frac{ndim * (ndim - 1)}{2}`, the interval
+            If :math:`k2 \equiv \\binom{biad_mat.shape[0]}{2}`, the interval
             becomes :math:`\[k1, k2\]`.
 
         :param biad_mat: biadjacency matrix
@@ -585,23 +619,23 @@ class BiCM:
     def NEW_get_pvalues_q(self, plam_mat, nlam_mat, k1, k2, parallel=True):
         """Calculate the p-values of the observed :math:`\\Lambda`-motifs.
 
-        For each number of :math:`\\Lambda`-motifs in ``nlam_mat``,
-        construct the Poisson Binomial distribution using the corresponding
+        For each number of :math:`\\Lambda`-motifs in ``nlam_mat``for the node
+        interval :math:`\[k1, k2\[`, construct the Poisson Binomial
+        distribution using the corresponding
         probabilities in ``plam_mat`` and calculate the p-value.
 
-        .. note::
-            * the p-values are saved in the matrix ``self.pval_mat``.
-            * the lower-triangular part of the output matrix is null since
-              the matrix is symmetric by definition.
-
         :param plam_mat: array containing the list of probabilities for the
-                        single observations of :math:`\\Lambda`-motifs
+            single observations of :math:`\\Lambda`-motifs
         :type plam_mat: numpy.array (square matrix)
         :param nlam_mat: array containing the observations of
             :math:`\\Lambda`-motifs
         :type nlam_mat: numpy.array (square matrix)
+        :param k1: lower interval limit 
+        :type k1: int
+        :param k2: upper interval limit 
+        :type k2: int
         :param parallel: if ``True``, the calculation is executed in parallel;
-                        if ``False``, only one process is started
+            if ``False``, only one process is started
         :type parallel: bool
         """
         n = len(nlam_mat)
@@ -650,6 +684,10 @@ class BiCM:
         :param nlam_mat: array containing the observations of
             :math:`\\Lambda`-motifs
         :type nlam_mat: numpy.array (square matrix)
+        :param k1: lower interval limit 
+        :type k1: int
+        :param k2: upper interval limit 
+        :type k2: int
         """
         n = len(plam_mat)
         # add tuples of matrix elements and indices to the input queue

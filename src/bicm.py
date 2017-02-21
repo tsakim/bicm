@@ -255,11 +255,13 @@ class BiCM:
         xp = xx[range(self.num_rows, self.dim)]
         for i in xrange(self.num_rows):
             mat[i, ] = xx[i] * xp / (1 + xx[i] * xp)
+        # account for machine precision:
+        mat += np.finfo(np.float).eps
         if np.any(mat < 0):
             errmsg = 'Error in get_adjacency_block: probabilities < 0 in ' \
                   + str(np.where(mat < 0))
             raise ValueError(errmsg)
-        elif np.any(mat > 1):
+        elif np.any(mat > (1. + np.finfo(np.float).eps)):
             errmsg = 'Error in get_adjacency_block: probabilities > 1 in' \
                   + str(np.where(mat > 1))
             raise ValueError(errmsg)

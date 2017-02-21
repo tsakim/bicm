@@ -306,12 +306,9 @@ class BiCM:
 # Lambda motifs
 # ------------------------------------------------------------------------------
 
-    def NEW_lambda_motifs(self, bip_set, adj, parallel=True, filename=None, 
+    def lambda_motifs(self, bip_set, parallel=True, filename=None, 
             delim='\t', binary=False):
-        """ 
-        :param adj: PROVISORISCH, spaeter self.adj_mat
-
-        Calculate and save the p-values of the :math:`\\Lambda`-motifs.
+        """Calculate and save the p-values of the :math:`\\Lambda`-motifs.
 
         For each node couple in the bipartite layer specified by ``bip_set``,
         the p-values of the corresponding :math:`\\Lambda`-motifs are
@@ -320,13 +317,16 @@ class BiCM:
         The results can be saved either as a binary or a human-readable file.
 
         .. note:
-            The output consists of one array of p-values to keep memory usage
+            * The output consists of one array of p-values to keep memory usage
             low. If the bipartite layer ``bip_set`` contains ``n`` nodes,
             this means that the array will contain :math:`\\binom{n}{2}``
             entries. The indices of the nodes corresponding to entry ``k``
             in the array can be reconstructed using the method
             ``flat2_triumat_idx(k, n)``.
-
+            * If ``binary == False``, the ``filename`` should end with
+            ``.csv``. Otherwise, it will be saved in binary format and the
+            suffix ``.npy`` will be appended automatically.
+                
         :param bip_set: select row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
         :param parallel: select whether the calculation of the p-values should
@@ -341,10 +341,10 @@ class BiCM:
         :type binary: bool
         """
         if (type(bip_set) == bool) and bip_set:
-            biad_mat = adj
+            biad_mat = self.adj_matrix
             bin_mat = self.bin_mat
         elif (type(bip_set) == bool) and not bip_set:
-            biad_mat = np.transpose(adj)
+            biad_mat = np.transpose(self.adj_matrix)
             bin_mat = np.transpose(self.bin_mat)
         else:
             errmsg = "'" + str(bip_set) + "' " + 'not supported.'
@@ -396,37 +396,37 @@ class BiCM:
 #        return nlam, plam, pval
 
 
-    def lambda_motifs(self, bip_set, adj, parallel=True, filename=None,
-            delim='\t'): 
-            
-        """ NOTA: ADJ IS ONLY HERE FOR TESTINg!!!
-        has to be removed!! also return value
-
-        Calculate and save the p-values of the :math:`\\Lambda`-motifs.
-
-        For each node couple in the bipartite layer specified by ``bip_set``,
-        :math:`\\Lambda`-motifs and calculate the corresponding p-value.
-
-        :param bip_set: select row-nodes (``True``) or column-nodes (``False``)
-        :type bip_set: bool
-        :param parallel: select whether the calculation of the p-values should
-            be run in parallel (``True``) or not (``False``)
-        :type parallel: bool
-        :param filename: name of the file which will contain the p-values
-        :type filename: str
-        :param delim: delimiter between entries in file, default is tab
-        :type delim: str
-        """
-#        plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
-        plam_mat = self.get_plambda_matrix(adj, bip_set)
-        nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
-        self.get_pvalues_q(plam_mat, nlam_mat, parallel)
-        if filename is None:
-            fname = 'p_values_' + str(bip_set) + '.csv'
-        else:
-            fname = filename
-#        self.save_matrix(self.pval_mat, filename=fname, delim=delim)
-        return self.pval_mat
+#    def OLD_lambda_motifs(self, bip_set, adj, parallel=True, filename=None,
+#            delim='\t'): 
+#            
+#        """ NOTA: ADJ IS ONLY HERE FOR TESTINg!!!
+#        has to be removed!! also return value
+#
+#        Calculate and save the p-values of the :math:`\\Lambda`-motifs.
+#
+#        For each node couple in the bipartite layer specified by ``bip_set``,
+#        :math:`\\Lambda`-motifs and calculate the corresponding p-value.
+#
+#        :param bip_set: select row-nodes (``True``) or column-nodes (``False``)
+#        :type bip_set: bool
+#        :param parallel: select whether the calculation of the p-values should
+#            be run in parallel (``True``) or not (``False``)
+#        :type parallel: bool
+#        :param filename: name of the file which will contain the p-values
+#        :type filename: str
+#        :param delim: delimiter between entries in file, default is tab
+#        :type delim: str
+#        """
+##        plam_mat = self.get_plambda_matrix(self.adj_matrix, bip_set)
+#        plam_mat = self.get_plambda_matrix(adj, bip_set)
+#        nlam_mat = self.get_lambda_motif_matrix(self.bin_mat, bip_set)
+#        self.get_pvalues_q(plam_mat, nlam_mat, parallel)
+#        if filename is None:
+#            fname = 'p_values_' + str(bip_set) + '.csv'
+#        else:
+#            fname = filename
+##        self.save_matrix(self.pval_mat, filename=fname, delim=delim)
+#        return self.pval_mat
 
     def get_lambda_motif_block(self, mm, k1, k2):
         """Return a subset of :math:`\\Lambda`-motifs as found in ``mm``.

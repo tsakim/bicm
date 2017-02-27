@@ -48,13 +48,13 @@ Usage:
     If the file is not binary, it should end with, e.g., ``.csv``. If it is
     binary instead, NumPy automatically attaches the ending ``.npy``.
 
-    In order to analyze the similarity of the row-layer nodes and to save the
+    In order to analyze the similarity of the **row-layer nodes** and to save the
     p-values of the corresponding :math:`\Lambda`-motifs, i.e. of the number of
     shared neighbors [Saracco2016]_, use::
 
         >>> cm.lambda_motifs(True, filename='p_values_True.csv', delim='\\t')
 
-    For the column-layer nodes, use::
+    For the **column-layer nodes, use::
 
         >>> cm.lambda_motifs(False, filename='p_values_False.csv', delim='\\t')
 
@@ -120,7 +120,6 @@ class BiCM:
         self.dim = self.dseq.size
         self.sol = None             # solution of the equation system
         self.adj_matrix = None      # biadjacency matrix of the null model
-        self.pval_mat = None        # matrix containing the resulting p-values
         self.input_queue = None     # queue for parallel processing
         self.output_queue = None    # queue for parallel processing
 
@@ -307,7 +306,7 @@ class BiCM:
 # ------------------------------------------------------------------------------
 
     def lambda_motifs(self, bip_set, parallel=True, filename=None, 
-            delim='\t', binary=False):
+            delim='\t', binary=True):
         """Calculate and save the p-values of the :math:`\\Lambda`-motifs.
 
         For each node couple in the bipartite layer specified by ``bip_set``,
@@ -325,7 +324,8 @@ class BiCM:
             ``flat2_triumat_idx(k, n)``.
             * If ``binary == False``, the ``filename`` should end with
             ``.csv``. Otherwise, it will be saved in binary format and the
-            suffix ``.npy`` will be appended automatically.
+            suffix ``.npy`` will be appended automatically. By default, the file
+            is saved in binary format.
                 
         :param bip_set: select row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
@@ -373,7 +373,7 @@ class BiCM:
                 k2 = kk[i + 1]
                 nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
                 plam = self.get_plambda_block(biad_mat, k1, k2)
-                pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2)
+                pv = self.get_pvalues_q(plam, nlam, k1, k2)
                 pval[k1:k2] = pv
             # last interval
             k1 = kk[len(kk) - 1]
@@ -381,7 +381,7 @@ class BiCM:
             nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
             plam = self.get_plambda_block(biad_mat, k1, k2)
             # for the last entry we have to INCLUDE k2, thus k2 + 1
-            pv = self.NEW_get_pvalues_q(plam, nlam, k1, k2 + 1)
+            pv = self.get_pvalues_q(plam, nlam, k1, k2 + 1)
             pval[k1:] = pv
         # check that all p-values have been calculated
 #        assert np.all(pval >= 0) and np.all(pval <= 1)
@@ -391,6 +391,8 @@ class BiCM:
                 fname +=  '.csv'
         else:
             fname = filename
+        # account for machine precision:
+        pval += np.finfo(np.float).eps
         self.save_matrix(pval, filename=fname, delim=delim,
                          binary=binary)
 #        return nlam, plam, pval
@@ -550,75 +552,75 @@ class BiCM:
                 paux[k:, :] = la
         return paux
 
-    @staticmethod
-    def get_plambda_matrix(biad_mat, bip_set):
-        """Return the :math:`\\Lambda`-motif probability tensor for ``bip_set``.
+#    @staticmethod
+#    def get_plambda_matrix(biad_mat, bip_set):
+#        """Return the :math:`\\Lambda`-motif probability tensor for ``bip_set``.
+#
+#        Given the biadjacency matrix ``biad_mat``,
+#        :math:`\\mathbf{M}_{rc} = p_{rc}`, which contains the probabilities of
+#        row-node `r` and column-node `c` being linked, the method returns the
+#        tensor
+#
+#        :math:`P(\\Lambda)_{ij} = (M_{i\\alpha_1} \\cdot M_{j\\alpha_1},
+#        M_{i\\alpha_2} \\cdot M_{j\\alpha_2}, ...),`
+#
+#        where :math:`(i, j)` are two nodes of the bipartite layer ``bip_set``
+#        and :math:`\\alpha_k` runs over the nodes in the opposite layer.
+#
+#        :param biad_mat: biadjacency matrix
+#        :type biad_mat: numpy.array
+#        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
+#        :type bip_set: bool
+#        :returns: :math:`\\Lambda`-motif probability tensor for ``bip_set``
+#        :rtype: numpy.array
+#        """
+#        if (type(bip_set) == bool) and bip_set:
+#            mm_mat = biad_mat
+#        elif (type(bip_set) == bool) and not bip_set:
+#            mm_mat = np.transpose(biad_mat)
+#        else:
+#            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
+#            raise NameError(errmsg)
+#        pl2 = np.empty((mm_mat.shape[0], mm_mat.shape[0], mm_mat.shape[1]))
+#        for i in xrange(mm_mat.shape[0]):
+#            pl2[i, ] = mm_mat[i, ] * mm_mat
+#        di = np.diag_indices(pl2.shape[0], 2)       # set diagonal to zero
+#        pl2[di] = 0
+#        return pl2
 
-        Given the biadjacency matrix ``biad_mat``,
-        :math:`\\mathbf{M}_{rc} = p_{rc}`, which contains the probabilities of
-        row-node `r` and column-node `c` being linked, the method returns the
-        tensor
-
-        :math:`P(\\Lambda)_{ij} = (M_{i\\alpha_1} \\cdot M_{j\\alpha_1},
-        M_{i\\alpha_2} \\cdot M_{j\\alpha_2}, ...),`
-
-        where :math:`(i, j)` are two nodes of the bipartite layer ``bip_set``
-        and :math:`\\alpha_k` runs over the nodes in the opposite layer.
-
-        :param biad_mat: biadjacency matrix
-        :type biad_mat: numpy.array
-        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
-        :type bip_set: bool
-        :returns: :math:`\\Lambda`-motif probability tensor for ``bip_set``
-        :rtype: numpy.array
-        """
-        if (type(bip_set) == bool) and bip_set:
-            mm_mat = biad_mat
-        elif (type(bip_set) == bool) and not bip_set:
-            mm_mat = np.transpose(biad_mat)
-        else:
-            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
-            raise NameError(errmsg)
-        pl2 = np.empty((mm_mat.shape[0], mm_mat.shape[0], mm_mat.shape[1]))
-        for i in xrange(mm_mat.shape[0]):
-            pl2[i, ] = mm_mat[i, ] * mm_mat
-        di = np.diag_indices(pl2.shape[0], 2)       # set diagonal to zero
-        pl2[di] = 0
-        return pl2
-
-    @staticmethod
-    def get_lambda_motif_matrix(mm, bip_set):
-        """Return the number of :math:`\\Lambda`-motifs as found in ``mm``.
-
-        Given the binary input matrix ``mm``, count the number of
-        :math:`\\Lambda`-motifs between node couples of the bipartite layer
-        specified by ``bip_set``.
-
-        :param mm: binary matrix
-        :type mm: numpy.array
-        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
-        :type bip_set: bool
-        :returns: square matrix of observed :math:`\\Lambda`-motifs
-        :rtype: numpy.array
-
-        :raise NameError: raise an error if the parameter ``bip_set`` is
-            neither ``True`` nor ``False``
-        """
-        if (type(bip_set) == bool) and bip_set:
-            nlam_mat = np.dot(mm, np.transpose(mm))
-        elif (type(bip_set) == bool) and not bip_set:
-            nlam_mat = np.dot(np.transpose(mm), mm)
-        else:
-            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
-            raise NameError(errmsg)
-        di = np.diag_indices(nlam_mat.shape[0], 2)
-        nlam_mat[di] = 0
-        return nlam_mat
+#    @staticmethod
+#    def get_lambda_motif_matrix(mm, bip_set):
+#        """Return the number of :math:`\\Lambda`-motifs as found in ``mm``.
+#
+#        Given the binary input matrix ``mm``, count the number of
+#        :math:`\\Lambda`-motifs between node couples of the bipartite layer
+#        specified by ``bip_set``.
+#
+#        :param mm: binary matrix
+#        :type mm: numpy.array
+#        :param bip_set: selects row-nodes (``True``) or column-nodes (``False``)
+#        :type bip_set: bool
+#        :returns: square matrix of observed :math:`\\Lambda`-motifs
+#        :rtype: numpy.array
+#
+#        :raise NameError: raise an error if the parameter ``bip_set`` is
+#            neither ``True`` nor ``False``
+#        """
+#        if (type(bip_set) == bool) and bip_set:
+#            nlam_mat = np.dot(mm, np.transpose(mm))
+#        elif (type(bip_set) == bool) and not bip_set:
+#            nlam_mat = np.dot(np.transpose(mm), mm)
+#        else:
+#            errmsg = "'" + str(bip_set) + "' " + 'not supported.'
+#            raise NameError(errmsg)
+#        di = np.diag_indices(nlam_mat.shape[0], 2)
+#        nlam_mat[di] = 0
+#        return nlam_mat
 
 
 ################################################################################
 
-    def NEW_get_pvalues_q(self, plam_mat, nlam_mat, k1, k2, parallel=True):
+    def get_pvalues_q(self, plam_mat, nlam_mat, k1, k2, parallel=True):
         """Calculate the p-values of the observed :math:`\\Lambda`-motifs.
 
         For each number of :math:`\\Lambda`-motifs in ``nlam_mat``for the node
@@ -656,12 +658,12 @@ class BiCM:
         self.input_queue = multiprocessing.Queue()
         self.output_queue = multiprocessing.Queue()
 
-        p_inqueue = multiprocessing.Process(target=self.NEW_add2inqueue,
+        p_inqueue = multiprocessing.Process(target=self.add2inqueue,
                                             args=(numprocs, plam_mat, nlam_mat,
                                                 k1, k2))
-        p_outqueue = multiprocessing.Process(target=self.NEW_outqueue2pval_mat,
+        p_outqueue = multiprocessing.Process(target=self.outqueue2pval_mat,
                                              args=(numprocs, pval_mat))
-        ps = [multiprocessing.Process(target=self.NEW_pval_process_worker,
+        ps = [multiprocessing.Process(target=self.pval_process_worker,
                                       args=()) for i in range(numprocs)]
         # start queues
         p_inqueue.start()
@@ -675,7 +677,7 @@ class BiCM:
         p_outqueue.join()
         return pval_mat
 
-    def NEW_add2inqueue(self, nprocs, plam_mat, nlam_mat, k1, k2):
+    def add2inqueue(self, nprocs, plam_mat, nlam_mat, k1, k2):
         """Add elements to the in-queue to calculate the p-values.
 
         :param nprocs: number of processes running in parallel
@@ -701,7 +703,7 @@ class BiCM:
         for i in xrange(nprocs):
                 self.input_queue.put("STOP")
 
-    def NEW_pval_process_worker(self):
+    def pval_process_worker(self):
         """Calculate one p-value and add the result to the out-queue."""
         # take elements from the queue as long as the element is not "STOP"
         for tupl in iter(self.input_queue.get, "STOP"):
@@ -713,7 +715,7 @@ class BiCM:
         # "STOP" to the output queue
         self.output_queue.put("STOP")
 
-    def NEW_outqueue2pval_mat(self, nprocs, pvalmat):
+    def outqueue2pval_mat(self, nprocs, pvalmat):
         """Put the results from the out-queue into the p-value matrix."""
         # stop the work after having met nprocs times "STOP"
         for work in xrange(nprocs):
@@ -724,102 +726,102 @@ class BiCM:
 
 ################################################################################
 
-    def get_pvalues_q(self, plam_mat, nlam_mat, parallel=True):
-        """Calculate the p-values of the observed :math:`\\Lambda`-motifs.
-
-        For each number of :math:`\\Lambda`-motifs in ``nlam_mat``,
-        construct the Poisson Binomial distribution using the corresponding
-        probabilities in ``plam_mat`` and calculate the p-value.
-
-        .. note::
-            * the p-values are saved in the matrix ``self.pval_mat``.
-            * the lower-triangular part of the output matrix is null since
-              the matrix is symmetric by definition.
-
-        :param plam_mat: array containing the list of probabilities for the
-                        single observations of :math:`\\Lambda`-motifs
-        :type plam_mat: numpy.array (square matrix)
-        :param nlam_mat: array containing the observations of
-            :math:`\\Lambda`-motifs
-        :type nlam_mat: numpy.array (square matrix)
-        :param parallel: if ``True``, the calculation is executed in parallel;
-                        if ``False``, only one process is started
-        :type parallel: bool
-        """
-        n = nlam_mat.shape[0]
-        # the array must be sharable to be accessible by all processes
-        shared_array_base = multiprocessing.Array(ctypes.c_double, n * n)
-        pval_mat = np.frombuffer(shared_array_base.get_obj())
-        self.pval_mat = pval_mat.reshape(n, n)
-        # number of processes running in parallel has to be tested.
-        # good guess is multiprocessing.cpu_count() +- 1
-        if parallel:
-            numprocs = multiprocessing.cpu_count() - 1
-        elif not parallel:
-            numprocs = 1
-        else:
-            numprocs = 1
-        self.input_queue = multiprocessing.Queue()
-        self.output_queue = multiprocessing.Queue()
-
-        p_inqueue = multiprocessing.Process(target=self.add2inqueue,
-                                            args=(numprocs, plam_mat, nlam_mat))
-        p_outqueue = multiprocessing.Process(target=self.outqueue2pval_mat,
-                                             args=(numprocs, ))
-        ps = [multiprocessing.Process(target=self.pval_process_worker,
-                                      args=()) for i in range(numprocs)]
-        # start queues
-        p_inqueue.start()
-        p_outqueue.start()
-        # start processes
-        for p in ps:
-            p.start()       # each process has an id, p.pid
-        p_inqueue.join()
-        for p in ps:
-            p.join()
-        p_outqueue.join()
-
-    def add2inqueue(self, nprocs, plam_mat, nlam_mat):
-        """Add elements to the in-queue to calculate the p-values.
-
-        :param nprocs: number of processes running in parallel
-        :type nprocs: int
-        :param plam_mat: array containing the list of probabilities for the
-            single observations of :math:`\\Lambda`-motifs
-        :type plam_mat: numpy.array (square matrix)
-        :param nlam_mat: array containing the observations of
-            :math:`\\Lambda`-motifs
-        :type nlam_mat: numpy.array (square matrix)
-        """
-        n = plam_mat.shape[0]
-        # add tuples of matrix elements and indices to the input queue
-        for i in xrange(n):
-            for j in xrange(i + 1, n):
-                self.input_queue.put((i, j, plam_mat[i, j], nlam_mat[i, j]))
-        # add as many poison pills "STOP" to the queue as there are workers
-        for i in xrange(nprocs):
-                self.input_queue.put("STOP")
-
-    def pval_process_worker(self):
-        """Calculate one p-value and add the result to the out-queue."""
-        # take elements from the queue as long as the element is not "STOP"
-        for tupl in iter(self.input_queue.get, "STOP"):
-            pb = PoiBin(tupl[2])
-            pv = pb.pval(int(tupl[3]))
-            # add the result to the output queue
-            self.output_queue.put((tupl[0], tupl[1], pv))
-        # once all the elements in the input queue have been dealt with, add a
-        # "STOP" to the output queue
-        self.output_queue.put("STOP")
-
-    def outqueue2pval_mat(self, nprocs):
-        """Put the results from the out-queue into the p-value matrix."""
-        # stop the work after having met nprocs times "STOP"
-        for work in xrange(nprocs):
-            for val in iter(self.output_queue.get, "STOP"):
-                i = val[0]
-                j = val[1]
-                self.pval_mat[i, j] = val[2]
+#    def OLD_get_pvalues_q(self, plam_mat, nlam_mat, parallel=True):
+#        """Calculate the p-values of the observed :math:`\\Lambda`-motifs.
+#
+#        For each number of :math:`\\Lambda`-motifs in ``nlam_mat``,
+#        construct the Poisson Binomial distribution using the corresponding
+#        probabilities in ``plam_mat`` and calculate the p-value.
+#
+#        .. note::
+#            * the p-values are saved in the matrix ``self.pval_mat``.
+#            * the lower-triangular part of the output matrix is null since
+#              the matrix is symmetric by definition.
+#
+#        :param plam_mat: array containing the list of probabilities for the
+#                        single observations of :math:`\\Lambda`-motifs
+#        :type plam_mat: numpy.array (square matrix)
+#        :param nlam_mat: array containing the observations of
+#            :math:`\\Lambda`-motifs
+#        :type nlam_mat: numpy.array (square matrix)
+#        :param parallel: if ``True``, the calculation is executed in parallel;
+#                        if ``False``, only one process is started
+#        :type parallel: bool
+#        """
+#        n = nlam_mat.shape[0]
+#        # the array must be sharable to be accessible by all processes
+#        shared_array_base = multiprocessing.Array(ctypes.c_double, n * n)
+#        pval_mat = np.frombuffer(shared_array_base.get_obj())
+#        self.pval_mat = pval_mat.reshape(n, n)
+#        # number of processes running in parallel has to be tested.
+#        # good guess is multiprocessing.cpu_count() +- 1
+#        if parallel:
+#            numprocs = multiprocessing.cpu_count() - 1
+#        elif not parallel:
+#            numprocs = 1
+#        else:
+#            numprocs = 1
+#        self.input_queue = multiprocessing.Queue()
+#        self.output_queue = multiprocessing.Queue()
+#
+#        p_inqueue = multiprocessing.Process(target=self.OLD_add2inqueue,
+#                                            args=(numprocs, plam_mat, nlam_mat))
+#        p_outqueue = multiprocessing.Process(target=self.OLD_outqueue2pval_mat,
+#                                             args=(numprocs, ))
+#        ps = [multiprocessing.Process(target=self.OLD_pval_process_worker,
+#                                      args=()) for i in range(numprocs)]
+#        # start queues
+#        p_inqueue.start()
+#        p_outqueue.start()
+#        # start processes
+#        for p in ps:
+#            p.start()       # each process has an id, p.pid
+#        p_inqueue.join()
+#        for p in ps:
+#            p.join()
+#        p_outqueue.join()
+#
+#    def OLD_add2inqueue(self, nprocs, plam_mat, nlam_mat):
+#        """Add elements to the in-queue to calculate the p-values.
+#
+#        :param nprocs: number of processes running in parallel
+#        :type nprocs: int
+#        :param plam_mat: array containing the list of probabilities for the
+#            single observations of :math:`\\Lambda`-motifs
+#        :type plam_mat: numpy.array (square matrix)
+#        :param nlam_mat: array containing the observations of
+#            :math:`\\Lambda`-motifs
+#        :type nlam_mat: numpy.array (square matrix)
+#        """
+#        n = plam_mat.shape[0]
+#        # add tuples of matrix elements and indices to the input queue
+#        for i in xrange(n):
+#            for j in xrange(i + 1, n):
+#                self.input_queue.put((i, j, plam_mat[i, j], nlam_mat[i, j]))
+#        # add as many poison pills "STOP" to the queue as there are workers
+#        for i in xrange(nprocs):
+#                self.input_queue.put("STOP")
+#
+#    def OLD_pval_process_worker(self):
+#        """Calculate one p-value and add the result to the out-queue."""
+#        # take elements from the queue as long as the element is not "STOP"
+#        for tupl in iter(self.input_queue.get, "STOP"):
+#            pb = PoiBin(tupl[2])
+#            pv = pb.pval(int(tupl[3]))
+#            # add the result to the output queue
+#            self.output_queue.put((tupl[0], tupl[1], pv))
+#        # once all the elements in the input queue have been dealt with, add a
+#        # "STOP" to the output queue
+#        self.output_queue.put("STOP")
+#
+#    def OLD_outqueue2pval_mat(self, nprocs):
+#        """Put the results from the out-queue into the p-value matrix."""
+#        # stop the work after having met nprocs times "STOP"
+#        for work in xrange(nprocs):
+#            for val in iter(self.output_queue.get, "STOP"):
+#                i = val[0]
+#                j = val[1]
+#                self.pval_mat[i, j] = val[2]
 
     def get_triup_dim(self, bip_set):
         """Return the number of possible couples in ``bip_set``.
@@ -850,26 +852,6 @@ class BiCM:
         :type n: int
         """
         return [i * n / m for i in range(m)]
-
-#    def slice_idx_range(self):
-#        """Slice the matrix dimensions into subsections.
-#
-#        :returns: row- and column indices of submatrices
-#        :rtype: list
-#        """
-#        if self.bin_mat.size > 100:
-#            bar = lambda x: int(0.2 * self.bin_mat.shape[0] * x)
-#            foo = lambda x: int(0.2 * self.bin_mat.shape[1] * x)
-#            rowidx = [bar(i) for i in range(
-#                self.bin_mat.shape[0]) if bar(i) < self.bin_mat.shape[0]]
-#            colidx = [foo(i) for i in range(
-#                self.bin_mat.shape[1]) if foo(i) < self.bin_mat.shape[1]]
-#        else:
-#            rowidx = [0]
-#            colidx = [0]
-#        rowidx.append(self.bin_mat.shape[0])
-#        colidx.append(self.bin_mat.shape[1])
-#        return [rowidx, colidx]
 
 # ------------------------------------------------------------------------------
 # Probability distributions for Lambda values

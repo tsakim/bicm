@@ -45,10 +45,16 @@ Calculating the p-values of the node similarities
 --------------------------------------------------------------------------------
 
 In order to analyze the similarity of the row-layer nodes and to save the
-p-values of the corresponding :math:`\Lambda`-motifs, i.e. of the number of
+p-values of the corresponding :math:`\Lambda`-motifs in *<filename>*, i.e. of the number of
 shared neighbors [Saracco2016]_, use::
 
-    >>> cm.lambda_motifs(True, filename='p_values_True.csv', delim='\t')
+    >>> cm.lambda_motifs(True, filename=<filename>)
+  
+By default, the file is saved as binary NumPy file to reduce the required space
+of the file. The format suffix ``.npy`` is appended automatically to the file
+name. If the file should be saved in a human-readable CSV format, use::
+
+    >>> cm.lambda_motifs(True, filename=<filename>, delim='\t')
 
 For the column-layer nodes, use::
 

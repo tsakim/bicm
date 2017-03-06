@@ -97,7 +97,7 @@ from poibin.poibin import PoiBin
 
 
 class BiCM:
-    """Bipartite Configuration model for undirected binary bipartite networks.
+    """Bipartite Configuration Model for undirected binary bipartite networks.
 
     This class implements the Bipartite Configuration Model (BiCM), which can
     be used as a null model for the analysis of undirected and binary bipartite
@@ -315,7 +315,8 @@ class BiCM:
 
         The results can be saved either as a binary or a human-readable file.
 
-        .. note:
+        .. note::
+
             * The output consists of one array of p-values to keep memory usage
             low. If the bipartite layer ``bip_set`` contains ``n`` nodes,
             this means that the array will contain :math:`\\binom{n}{2}``
@@ -339,6 +340,9 @@ class BiCM:
         :param binary: if ``True``, the file will be saved in the binary 
             NumPy format ``.npy``, otherwise as ``.csv``
         :type binary: bool
+
+        :raise NameError: raise an error if the parameter ``bip_set`` is
+            neither ``True`` nor ``False``
         """
         if (type(bip_set) == bool) and bip_set:
             biad_mat = self.adj_matrix

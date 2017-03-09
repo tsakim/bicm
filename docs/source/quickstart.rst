@@ -1,7 +1,7 @@
 BiCM Quickstart
 ===============
 
-If you want to get started right away, go ahead and follow the summary below.  The ``bicm`` module encompasses essentially two steps for the analysis of node similarities in bipartite networks:
+The ``bicm`` module encompasses essentially two steps for the analysis of node similarities in bipartite networks:
 
 #. given an input matrix, create the biadjacency matrix of the BiCM null model
 #. perform a statistical validation of the similarities of nodes in the same
@@ -35,7 +35,7 @@ The biadjacency matrix of the BiCM null model can be saved in *<filename>*::
 
     >>> cm.save_biadjacency(filename=<filename>, delim='\t')
 
-By default, the file is saved in a human-readable CSV format. The information can also be saved as a binary NumPy file ``.npy`` by using::
+By default, the file is saved in a human-readable ``.csv`` format. The information can also be saved as a binary NumPy file ``.npy`` by using::
 
     >>> cm.save_biadjacency(filename=<filename>, binary=True)
 
@@ -61,7 +61,7 @@ For the column-layer nodes, use::
     >>> cm.lambda_motifs(False, filename='p_values_False.csv', delim='\t')
 
 Subsequently, the p-values can be used to perform a multiple hypotheses testing
-and to obtain statistically validated monopartite projections [Saracco2016]_.
-The p-values are calculated in parallel by default, see :ref:`parallel` for
-details.
+of the node similarities and to obtain statistically validated monopartite
+projections [Saracco2016]_. The p-values are calculated in parallel by
+default, see :ref:`parallel` for details.
 

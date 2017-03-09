@@ -2,7 +2,7 @@
 
 The Bipartite Configuration Model (BiCM) is a statistical null model for binary
 bipartite networks \[Squartini2011, Saracco2015\]. It offers an unbiased method
-of analyzing node similarities and obtaining statistically validated
+for analyzing node similarities and obtaining statistically validated
 monopartite projections \[Saracco2016\].
 
 The BiCM belongs to a series of entropy-based null model for binary bipartite

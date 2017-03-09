@@ -1,5 +1,5 @@
 Contact
 ================================================================================
 
-For questions or input, please write to mika.straka@imtlucca.it.
+For questions or input, please write to mika.straka [at] imtlucca.it.
 

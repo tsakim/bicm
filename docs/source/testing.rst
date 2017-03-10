@@ -9,11 +9,11 @@ execute::
 
     >>> python -m doctest bicm_tests.txt
 
-from the folder `src` in the command line. If you want to run the tests in
+from the folder ``src`` in the command line. If you want to run the tests in
 verbose mode, use::
 
     >>> python -m doctest -v bicm_tests.txt
 
-Note that `bicm.py` and `bicm_tests.txt` have to be in the same directory to
+Note that ``bicm.py`` and ``bicm_tests.txt`` have to be in the same directory to
 run the test.
 

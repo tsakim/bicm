@@ -1,13 +1,12 @@
 BiCM Quickstart
 ===============
 
-The ``bicm`` module encompasses essentially two steps for the analysis of node similarities in bipartite networks:
+The ``bicm`` module encompasses essentially two steps for the validation of node similarities in bipartite networks:
 
 #. given an input matrix, create the biadjacency matrix of the BiCM null model
-#. perform a statistical validation of the similarities of nodes in the same
-   layer
-
-The validated node similarities can be used to obtain an unbiased monopartite projection of the bipartite network, as illustrated in [Saracco2016]_.
+#. calculate the p-values of the observed similarities of nodes in the same bipartite layer
+  
+Subsequently, a multiple hypothesis testing of the p-values can be performed. The statistically validated node similarities give rise to a unbiased monopartite projection of the original bipartite network, as illustrated in [Saracco2016]_.
 
 For more detailed explanations of the methods, please refer to [Saracco2016]_, the :ref:`tutorial` and the :ref:`api`.
 
@@ -39,26 +38,37 @@ By default, the file is saved in a human-readable ``.csv`` format. The informati
 
     >>> cm.save_biadjacency(filename=<filename>, binary=True)
 
-If the file is not binary, it should end with, e.g., ``.csv``. If it is binary instead, NumPy automatically attaches the ending ``.npy``.
+If the file is not binary, it should end with, e.g., ``.csv``. If it is binary instead, NumPy automatically appends the ending ``.npy``.
 
 Calculating the p-values of the node similarities
 --------------------------------------------------------------------------------
 
-In order to analyze the similarity of the row-layer nodes and to save the
-p-values of the corresponding :math:`\Lambda`-motifs in *<filename>*, i.e. of the number of
-shared neighbors [Saracco2016]_, use::
+In order to analyze the similarities of the **row-nodes** and to save the
+p-values of the observed numbers of shared neighbors (i.e. of the
+:math:`\Lambda`-motifs [Saracco2016]_) in *<filename>*, use::
 
     >>> cm.lambda_motifs(True, filename=<filename>)
   
-By default, the file is saved as binary NumPy file to reduce the required space
-of the file. The format suffix ``.npy`` is appended automatically to the file
-name. If the file should be saved in a human-readable CSV format, use::
+By default, the file is saved as binary NumPy file to reduce disk space, and
+the format suffix ``.npy`` is appended. If the file should be saved in a
+human-readable ``.csv`` format, use::
 
-    >>> cm.lambda_motifs(True, filename=<filename>, delim='\t')
+    >>> cm.lambda_motifs(True, filename=<filename>, delim='\t', binary=False)
 
-For the column-layer nodes, use::
+Analogously for the **column-nodes**, use::
 
-    >>> cm.lambda_motifs(False, filename='p_values_False.csv', delim='\t')
+    >>> cm.lambda_motifs(False, filename=<filename>)
+
+or:: 
+
+    >>> cm.lambda_motifs(False, filename=<filename>, delim='\t', binary=False)
+
+.. note::
+    
+    The p-values are saved as a one-dimensional array with index :math:`k \in
+    \left[0, \ldots, \binom{N}{2} - 1\right]` for a bipartite layer of
+    :math:`N` nodes. Please check the section :ref:`output-format` for details
+    regarding the indexing.
 
 Subsequently, the p-values can be used to perform a multiple hypotheses testing
 of the node similarities and to obtain statistically validated monopartite

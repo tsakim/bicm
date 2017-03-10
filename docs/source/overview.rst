@@ -15,24 +15,24 @@ network.
 The construction of the BiCM, just like the related `BiPCM
 <https://github.com/tsakim/bipcm>`_ and `BiRG
 <https://github.com/tsakim/birg>`_ models, is based on the generation of a
-grandcanonical ensemble of bipartite graphs subject to certain constraints. The
+grand canonical ensemble of bipartite graphs subject to certain constraints. The
 constraints can be of different types. For instance, in the case of the BiCM
 the average degrees of the nodes of the input network are fixed. In the BiRG,
-on the other hand, the total number of edges is constrained.
+on the other hand, the total number of edges is constrained. In general, these
+models are referred to as entropy-based null models.
 
 The average graph of the ensemble can be calculated analytically using the
 entropy-maximization principle and provides a statistical null model, which can
-be used for establishing statistically significant node similarities. In
-general, they are referred to as entropy-based null models. For more
+be used for establishing statistically significant node similarities. For more
 information and a detailed explanation of the underlying methods, please refer
 to [Saracco2016]_.  
 
 By using the ``bicm`` module, the user can obtain the BiCM null model which
 corresponds to the input matrix representing an undirected bipartite network.
 To address the question of node similarity, the p-values of the observed
-numbers of common neighbors can be calculated and used for statistical
-verification. For an illustration and further details, please refer to
-[Saracco2016]_ and [Straka2016]_.
+numbers of common neighbors (i.e. of the :math:`\Lambda`-motifs) can be
+calculated and used for statistical verification. For an illustration and
+further details, please refer to [Saracco2016]_ and [Straka2016]_.
 
 Dependencies
 --------------------------------------------------------------------------------

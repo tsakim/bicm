@@ -1,4 +1,4 @@
-Bipartite Configuration Model - Documentation
+Bipartite Configuration Model for Python - Documentation
 ================================================================================
 
 The Bipartite Configuration Model (BiCM) is a statistical null model for binary

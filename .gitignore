@@ -6,4 +6,5 @@ output/*.csv
 docs/_build
 docs/_static
 docs/_template
-
+*.ipynb
+src/notes_*

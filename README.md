@@ -5,7 +5,7 @@ bipartite networks \[Squartini2011, Saracco2015\]. It offers an unbiased method
 for analyzing node similarities and obtaining statistically validated
 monopartite projections \[Saracco2016\].
 
-The BiCM belongs to a series of entropy-based null model for binary bipartite
+The BiCM belongs to a series of entropy-based null models for binary bipartite
 networks, see also
 
 * [BiPCM](https://github.com/tsakim/bipcm) - Bipartite Partial Configuration Model

@@ -89,102 +89,30 @@ Usage:
     >>> cm.get_triup_dim(True)
     1
 
-# BiCM.get_plambda_matrix ------------------------------------------------------
 
-    Test the function:
-    >>> binmat = np.array([[1, 0], [1, 1]])
+# BiCM.get_lambda_motif_block --------------------------------------------------
+
+    >>> binmat = np.array([[1, 1, 0], [1, 1, 1]]).T
     >>> bb = BiCM(binmat)
-    >>> bip_prob_mat = np.array([[0.1, 0.5, 1], [0.1, 0.1, 0.5]])
-
-    Test error message:
-    >>> bb.get_plambda_matrix(bip_prob_mat, None)
-    Traceback (most recent call last):
-    ...
-    NameError: 'None' not supported.
-
-    Lambda motif probabilities for the two countries (rows):
-    >>> bb.get_plambda_matrix(bip_prob_mat, True)
-    array([[[ 0.  ,  0.  ,  0.  ],
-            [ 0.01,  0.05,  0.5 ]],
-    <BLANKLINE>
-           [[ 0.01,  0.05,  0.5 ],
-            [ 0.  ,  0.  ,  0.  ]]])
-
-    Lambda motif probabilities for the products (columns):
-    >>> bb.get_plambda_matrix(bip_prob_mat, False)
-    array([[[ 0.  ,  0.  ],
-            [ 0.05,  0.01],
-            [ 0.1 ,  0.05]],
-    <BLANKLINE>
-           [[ 0.05,  0.01],
-            [ 0.  ,  0.  ],
-            [ 0.5 ,  0.05]],
-    <BLANKLINE>
-           [[ 0.1 ,  0.05],
-            [ 0.5 ,  0.05],
-            [ 0.  ,  0.  ]]])
-
-# BiCM.get_lambda_motif_matrix ------------------------------------------------
-
-    >>> binmat = np.array([[1, 1, 0], [1, 1, 1]])
-    >>> bb = BiCM(binmat)
-
-    Test error message:
-    >>> bb.get_lambda_motif_matrix(binmat, None)
-    Traceback (most recent call last):
-    ...
-    NameError: 'None' not supported.
 
     Lambda motifs of countries:
-    >>> bb.get_lambda_motif_matrix(binmat, True)
-    array([[0, 2],
-           [2, 0]])
-
-    Lambda motifs of products:
-    >>> bb.get_lambda_motif_matrix(binmat, False)
-    array([[0, 2, 1],
-           [2, 0, 1],
-           [1, 1, 0]])
+    >>> bb.get_lambda_motif_block(binmat, 0, 2)
+    array([ 2.,  1.,  1.])
 
 # BiCM.get_pvalues -------------------------------------------------------------
 
-    >>> binmat = np.array([[1, 0], [1, 1]]); bb = BiCM(binmat)
-    >>> p = [0.5, 1.0]; plambm = np.array([[[0, 0], p], [p, [0, 0]]])
-    >>> nlambm = np.array([[0, 1], [1, 0]])
-    >>> bb.get_pvalues_q(plambm, nlambm, parallel=False)
-    >>> bb.pval_mat
-    array([[ 0.,  1.],
-           [ 0.,  0.]])
-
     >>> p = [0.1, 0.5, 0.7]
     >>> plambm = np.array([[p, p, p], [p, p, p], [p, p, p]])
-    >>> nlambm = np.array([[0, 2, 1], [2, 0, 1], [1, 1, 0]])
-    >>> bb.get_pvalues_q(plambm, nlambm, parallel=False)
-    >>> bb.pval_mat
-    array([[ 0.   ,  0.4  ,  0.865],
-           [ 0.   ,  0.   ,  0.865],
-           [ 0.   ,  0.   ,  0.   ]])
+    >>> nlambm = np.array([2, 1, 1])
+    >>> bb.get_pvalues_q(plambm[0], nlambm, parallel=False, k1=0, k2=3)
+    array([ 0.4  ,  0.865,  0.865])
 
-    Check that seqential and parallel processing obtain the same results:
-    >> binmat = np.array([[1, 0], [1, 1]]); bb = BiCM(binmat)
-    >> p = [0.5, 1.0]; plambm = np.array([[[0, 0], p], [p, [0, 0]]])
-    >> nlambm = np.array([[0, 1], [1, 0]])
-    >> pv_sequential = bb.get_pvalues(plambm, nlambm, parallel=False)
-    >> pv_parallel = bb.get_pvalues(plambm, nlambm, parallel=True)
-    >> np.all(pv_sequential == pv_parallel)
+#    Check that seqential and parallel processing obtain the same results:
+    >>> pv_seq = bb.get_pvalues_q(plambm[0], nlambm, parallel=False, k1=0, k2=3)
+    >>> pv_par = bb.get_pvalues_q(plambm[0], nlambm, parallel=True, k1=0, k2=3)
+    >>> np.all(pv_seq == pv_par)
     True
 
-# BiCM.get_lambda_probdist ----------------------------------------------------- 
-#
-#    >>> td = np.array([[1, 0], [0, 1], [0, 1]])
-#    >>> bb = BiCM(td)
-#    >>> bb.make_bicm()
-#    >>> bb.save_lambda_probdist(bip_set=True, parallel=True, write=False)
-#    >>> bb.probdist_mat
-#    array([[ 0.49382716,  0.45679012,  0.04938272],
-#           [ 0.49382716,  0.45679012,  0.04938272],
-#           [ 0.49382716,  0.45679012,  0.04938272]])
-#
 # BiCM.trium2flat_idx ---------------------------------------------------------- 
 # BiCM.flat2triumat_idx -------------------------------------------------------- 
 
@@ -192,14 +120,6 @@ Usage:
     >>> bb = BiCM(td)
     >>> bb.triumat2flat_idx(3, 5, 8)
     19
-    >>> for k in range(3): print bb.get_row_idx(k, 3)
-    0
-    0
-    1
-    >>> for k in range(3): print bb.get_column_idx(k, 3, bb.get_row_idx(k, 3))
-    1
-    2
-    2
     >>> for k in range(45):
     ...     ij = bb.flat2triumat_idx(k, 10)
     ...     assert bb.triumat2flat_idx(ij[0], ij[1], 10) == k
@@ -293,7 +213,6 @@ Usage:
     >>> pl = bb.get_plambda_block(adj, k1, k2)
     >>> assert np.all(plam[k1:] == pl)
 
-
     >>> r = np.random.randint(low=5, high=15)
     >>> c = np.random.randint(low=10, high=100)
     >>> td = np.random.randint(low=0, high=2, size=r * c).reshape(r, c) 
@@ -311,42 +230,3 @@ Usage:
     >>> pl = bb.get_plambda_block(adj, k1, k2)
     >>> assert np.all(plam[k1:k2] == pl)
 
-# BiCM.lambda_motifs_loop ------------------------------------------------------ 
-
-    >>> r = np.random.randint(low=5, high=6)
-    >>> c = np.random.randint(low=8, high=9)
-    >>> td = np.random.randint(low=0, high=2, size=r * c).reshape(r, c) 
-    >>> adj = np.random.random(size=td.size).reshape(td.shape)
-    >>> bb = BiCM(td)
-    >>> n = bb.get_triup_dim(True)
-    >>> nl = np.dot(td, td.T)[np.triu_indices(n=td.shape[0], k=1)]
-    >>> plam = np.ones(shape=(n, bb.bin_mat.shape[1])) * (99)
-    >>> m = 0;
-    >>> for i in range(adj.shape[0]):
-    ...     for j in range(i + 1, adj.shape[0]):
-    ...         plam[m, :] = adj[i, :] * adj[j, :] 
-    ...         m += 1
-
-    >>> nl2, pl2, pv = bb.NEW_lambda_motifs(bip_set=True, adj=adj)
-    >>> pv0 = bb.lambda_motifs(True, adj)
-    >>> assert np.all(pv0[np.triu_indices_from(pv0, k=1)] == pv)
-
-    >>> nl2, pl2, pv = bb.NEW_lambda_motifs(bip_set=False, adj=adj, binary=True)
-    >>> pv0 = bb.lambda_motifs(False, adj)
-    >>> assert np.all(pv0[np.triu_indices_from(pv0, k=1)] == pv)
-
-#    >>> assert len(nl) == len(nl2)
-#    >>> assert np.all(nl == nl2)
-#    >>> assert len(plam) == len(pl2)
-#    >>> assert np.all(plam == pl2)
-
-#    >>> print np.all(nl == nl2)
-
-#    >>> td = np.random.randint(low=0, high=2, size=123000).reshape(123, 1000) 
-#    >>> bb = BiCM(td)
-#    >>> n = bb.get_triup_dim(True)
-#    >>> nl = np.dot(td, td.T)[np.triu_indices(n=td.shape[0], k=1)]
-#    >>> k1 = np.random.randint(low=0, high=n/2)
-#    >>> k2 = np.random.randint(low=n/2, high=n)
-#    >>> nl2 = bb.get_lambda_motif_block(bb.bin_mat, k1, k2, bb.bin_mat.shape[0])
-#    >>> assert np.all((nl[k1:k2] == nl2))

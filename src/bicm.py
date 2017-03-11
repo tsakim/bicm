@@ -61,8 +61,8 @@ Usage:
 
     By default, the resulting p-values are saved as binary NumPy file to reduce
     the required disk space, and the format suffix ``.npy`` is appended. If the
-    file should be saved in a human-readable ``.csv`` format, use:: 
-    
+    file should be saved in a human-readable ``.csv`` format, use::
+
         >>> cm.lambda_motifs(True, filename=<filename>, delim='\\t', \
                 binary=False)
 
@@ -73,7 +73,7 @@ Usage:
 
     .. note::
 
-         The p-values are saved as a one-dimensional array with index 
+         The p-values are saved as a one-dimensional array with index
          :math:`k \\in \\left[0, \\ldots, \\binom{N}{2} - 1\\right]` for a
          bipartite layer of :math:`N` nodes. The indices ``(i, j)`` of the
          nodes corresponding to entry ``k`` in the array can be reconstructed
@@ -330,7 +330,7 @@ class BiCM:
 # Lambda motifs
 # ------------------------------------------------------------------------------
 
-    def lambda_motifs(self, bip_set, parallel=True, filename=None, 
+    def lambda_motifs(self, bip_set, parallel=True, filename=None,
             delim='\t', binary=True, num_chunks=4):
         """Calculate and save the p-values of the :math:`\\Lambda`-motifs.
 
@@ -348,7 +348,7 @@ class BiCM:
               ``num_chunks`` chunks, which are processed sequentially in order
               to avoid memory allocation errors. Note that a larger value of
               ``num_chunks`` will lead to less memory occupation, but comes at
-              the cost of slower processing speed. 
+              the cost of slower processing speed.
 
             * The output consists of a one-dimensional array of p-values. If
               the bipartite layer ``bip_set`` contains ``n`` nodes, this means
@@ -356,14 +356,14 @@ class BiCM:
               indices ``(i, j)`` of the nodes corresponding to entry ``k`` in
               the array can be reconstructed using the method
               :func:`BiCM.flat2_triumat_idx`. The number of nodes ``n``
-              can be recovered from the length of the array with 
-              :func:`BiCM.flat2_triumat_dim` 
+              can be recovered from the length of the array with
+              :func:`BiCM.flat2_triumat_dim`
 
             * If ``binary == False``, the ``filename`` should end with
               ``.csv``. If ``binary == True``, it will be saved in binary NumPy
               ``.npy`` format and the suffix ``.npy`` will be appended
               automatically. By default, the file is saved in binary format.
-                
+
         :param bip_set: select row-nodes (``True``) or column-nodes (``False``)
         :type bip_set: bool
         :param parallel: select whether the calculation of the p-values should
@@ -372,14 +372,14 @@ class BiCM:
         :param filename: name of the output file
         :type filename: str
         :param delim: delimiter between entries in the ``.csv``file, default is
-            ``\\t`` 
+            ``\\t``
         :type delim: str
-        :param binary: if ``True``, the file will be saved in the binary 
+        :param binary: if ``True``, the file will be saved in the binary
             NumPy format ``.npy``, otherwise as ``.csv``
         :type binary: bool
         :param num_chunks: number of chunks of p-value calculations that are
-            performed sequentially        
-        :type num_chunks: int 
+            performed sequentially
+        :type num_chunks: int
         :raise ValueError: raise an error if the parameter ``bip_set`` is
             neither ``True`` nor ``False``
         """
@@ -395,7 +395,7 @@ class BiCM:
 
         n = self.get_triup_dim(bip_set)
         pval = np.ones(shape=(n, ), dtype='float') * (-0.1)
-    
+
         # handle layers of dimension 2 separately
         if n == 1:
             nlam = np.dot(bin_mat[0, :], bin_mat[1, :].T)
@@ -420,7 +420,7 @@ class BiCM:
                 pval[k1:k2] = pv
             # last interval
             k1 = kk[len(kk) - 1]
-            k2 = n - 1 
+            k2 = n - 1
             nlam = self.get_lambda_motif_block(bin_mat, k1, k2)
             plam = self.get_plambda_block(biad_mat, k1, k2)
             # for the last entry we have to INCLUDE k2, thus k2 + 1
@@ -442,8 +442,7 @@ class BiCM:
 
 
 #    def OLD_lambda_motifs(self, bip_set, adj, parallel=True, filename=None,
-#            delim='\t'): 
-#            
+#            delim='\t'):
 #        """ NOTA: ADJ IS ONLY HERE FOR TESTINg!!!
 #        has to be removed!! also return value
 #
@@ -486,22 +485,22 @@ class BiCM:
             * The :math:`\\Lambda`-motifs are counted between the **row-nodes**
               of the input matrix ``mm``.
 
-            * If :math:`k_2 \equiv \\binom{mm.shape[0]}{2}`, the interval 
+            * If :math:`k_2 \equiv \\binom{mm.shape[0]}{2}`, the interval
               becomes :math:`\\left[k_1, k_2\\right]`.
 
         :param mm: binary matrix
         :type mm: numpy.array
-        :param k1: lower interval limit 
+        :param k1: lower interval limit
         :type k1: int
-        :param k2: upper interval limit 
+        :param k2: upper interval limit
         :type k2: int
         :returns: array of observed :math:`\\Lambda`-motifs
         :rtype: numpy.array
         """
         ndim = mm.shape[0]
         # if the upper limit is the largest possible index, i.e. corresponds to
-        # the node couple (ndim - 2, ndim - 1), where node indices start from 0, 
-        # include the result 
+        # the node couple (ndim - 2, ndim - 1), where node indices start from 0,
+        # include the result
         if k2 == (ndim * (ndim - 1) / 2 - 1):
             flag = 1
         else:
@@ -536,15 +535,15 @@ class BiCM:
     def get_plambda_block(self, biad_mat, k1, k2):
         """Return a subset of the :math:`\\Lambda` probability matrix.
 
-        Given the biadjacency matrix ``biad_mat`` with 
+        Given the biadjacency matrix ``biad_mat`` with
         :math:`\\mathbf{M}_{rc} = p_{rc}`, which describes the probabilities of
         row-node ``r`` and column-node ``c`` being linked, the method returns
-        the matrix 
+        the matrix
 
         :math:`P(\\Lambda)_{ij} = \\left(M_{i\\alpha_1} \\cdot M_{j\\alpha_1},
         M_{i\\alpha_2} \\cdot M_{j\\alpha_2}, \\ldots\\right),`
 
-        for all the node couples in the interval 
+        for all the node couples in the interval
         :math:`\\left[k_1, k_2\\right[`.  :math:`(i, j)` are two **row-nodes**
         of ``biad_mat`` and :math:`\\alpha_k` runs over the nodes in the
         opposite layer.
@@ -552,24 +551,24 @@ class BiCM:
         .. note::
 
             * The probabilities are calculated between the **row-nodes** of the
-              input matrix ``biad_mat``.  
+              input matrix ``biad_mat``.
 
             * If :math:`k_2 \equiv \\binom{biad\\_mat.shape[0]}{2}`, the
               interval becomes :math:`\\left[k1, k2\\right]`.
 
         :param biad_mat: biadjacency matrix
         :type biad_mat: numpy.array
-        :param k1: lower interval limit 
+        :param k1: lower interval limit
         :type k1: int
-        :param k2: upper interval limit 
+        :param k2: upper interval limit
         :type k2: int
-        :returns: :math:`\\Lambda`-motif probability matrix 
+        :returns: :math:`\\Lambda`-motif probability matrix
         :rtype: numpy.array
         """
         [ndim1, ndim2] = biad_mat.shape
         # if the upper limit is the largest possible index, i.e. corresponds to
-        # the node couple (ndim - 2, ndim - 1), where node indices start from 0, 
-        # include the result 
+        # the node couple (ndim - 2, ndim - 1), where node indices start from 0,
+        # include the result
         if k2 == (ndim1 * (ndim1 - 1) / 2 - 1):
             flag = 1
         else:
@@ -581,10 +580,10 @@ class BiCM:
         # if limits have the same row index
         if i1 == i2:
             paux[:k2 - k1, :] = biad_mat[i1, ] * biad_mat[j1:j2, :]
-        # if limits have different indices 
+        # if limits have different indices
         else:
             k = 0
-            # get values for lower limit row 
+            # get values for lower limit row
             fi = biad_mat[i1, :] * biad_mat[j1:, :]
             paux[:len(fi), :] = fi
             k += len(fi)
@@ -595,9 +594,9 @@ class BiCM:
                 k += len(mid)
             # get values for upper limit row
             if flag == 1:
-                paux[-1, :] = biad_mat[ndim1 - 2, :] * biad_mat[ndim1 - 1, :] 
+                paux[-1, :] = biad_mat[ndim1 - 2, :] * biad_mat[ndim1 - 1, :]
             else:
-                la = biad_mat[i2, :] * biad_mat[i2 + 1:j2, :] 
+                la = biad_mat[i2, :] * biad_mat[i2 + 1:j2, :]
                 paux[k:, :] = la
         return paux
 
@@ -683,9 +682,9 @@ class BiCM:
         :param nlam_mat: array containing the observations of
             :math:`\\Lambda`-motifs
         :type nlam_mat: numpy.array (square matrix)
-        :param k1: lower interval limit 
+        :param k1: lower interval limit
         :type k1: int
-        :param k2: upper interval limit 
+        :param k2: upper interval limit
         :type k2: int
         :param parallel: if ``True``, the calculation is executed in parallel;
             if ``False``, only one process is started
@@ -737,15 +736,15 @@ class BiCM:
         :param nlam_mat: array containing the observations of
             :math:`\\Lambda`-motifs
         :type nlam_mat: numpy.array (square matrix)
-        :param k1: lower interval limit 
+        :param k1: lower interval limit
         :type k1: int
-        :param k2: upper interval limit 
+        :param k2: upper interval limit
         :type k2: int
         """
         n = len(plam_mat)
         # add tuples of matrix elements and indices to the input queue
         for k in xrange(k1, k2):
-            self.input_queue.put((k - k1, plam_mat[k - k1, :], 
+            self.input_queue.put((k - k1, plam_mat[k - k1, :],
                                   nlam_mat[k - k1]))
 
         # add as many poison pills "STOP" to the queue as there are workers
@@ -874,13 +873,13 @@ class BiCM:
 
     def get_triup_dim(self, bip_set):
         """Return the number of possible node couples in ``bip_set``.
-        
+
         :param bip_set: selects row-nodes (``True``) or column-nodes
-            (``False``) 
+            (``False``)
         :type bip_set: bool
-        :returns: return the number of node couple combinations corresponding 
+        :returns: return the number of node couple combinations corresponding
             to the layer ``bip_set``
-        :rtype: int 
+        :rtype: int
 
         :raise ValueError: raise an error if the parameter ``bip_set`` is
             neither ``True`` nor ``False``
@@ -898,7 +897,7 @@ class BiCM:
 
         :param n: upper limit of the range
         :type n: int
-        :param m: number of part in which range should be split 
+        :param m: number of part in which range should be split
         :type n: int
         :returns: delimiter indices for the ``m`` parts
         :rtype: list
@@ -1070,11 +1069,11 @@ class BiCM:
 
     @staticmethod
     def triumat2flat_dim(n):
-        """Return the size of the triangular part of a ``n x n`` matrix. 
-        
+        """Return the size of the triangular part of a ``n x n`` matrix.
+
         :param n: the dimension of the square matrix
         :type n: int
-        :returns: number of elements in the upper triangular part of the matrix 
+        :returns: number of elements in the upper triangular part of the matrix
             (excluding the diagonal)
         :rtype: int
         """
@@ -1082,7 +1081,7 @@ class BiCM:
 
     @staticmethod
     def flat2triumat_dim(k):
-        """Return the dimension of the matrix hosting ``k`` triangular elements.  
+        """Return the dimension of the matrix hosting ``k`` triangular elements.
 
         :param k: the number of elements in the upper triangular
             part of the corresponding square matrix, exluding the diagonal
@@ -1131,8 +1130,8 @@ class BiCM:
         .. note::
 
             * The relative path has to be provided in the filename, e.g.
-              *../data/pvalue_matrix.csv*. 
-            
+              *../data/pvalue_matrix.csv*.
+
             * If ``binary==True``, NumPy
               automatically appends the format ending ``.npy`` to the file.
 
@@ -1141,7 +1140,7 @@ class BiCM:
         :param delim: delimiter between values in file
         :type delim: str
         :param binary: if ``True``, save as binary ``.npy``, otherwise as a
-            ``.csv`` file 
+            ``.csv`` file
         :type binary: bool
         """
         self.save_array(self.adj_matrix, filename, delim, binary)
@@ -1156,12 +1155,12 @@ class BiCM:
         .. note::
 
             * The relative path has to be provided in the filename, e.g.
-              *../data/pvalue_matrix.csv*. 
-            
+              *../data/pvalue_matrix.csv*.
+
             * If ``binary==True``, NumPy
               automatically appends the format ending ``.npy`` to the file.
 
-        :param mat: array 
+        :param mat: array
         :type mat: numpy.array
         :param filename: name of the output file
         :type filename: str

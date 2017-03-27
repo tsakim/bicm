@@ -407,7 +407,7 @@ class BiCM:
             # calculations # of the p-values in ``m`` intervals to avoid memory
             # allocation errors
             if n > 100:
-                kk = self.split_range(n, m=4)
+                kk = self.split_range(n, m=num_chunks)
             else:
                 kk = [0]
             # calculate p-values for index intervals
@@ -748,7 +748,7 @@ class BiCM:
         """Return the dimension of the matrix hosting ``k`` triangular elements.
 
         :param k: the number of elements in the upper triangular
-            part of the corresponding square matrix, exluding the diagonal
+            part of the corresponding square matrix, excluding the diagonal
         :type k: int
         :returns: dimension of the corresponding square matrix
         :rtype: int

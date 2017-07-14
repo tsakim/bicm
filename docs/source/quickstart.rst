@@ -5,7 +5,7 @@ The ``bicm`` module encompasses essentially two steps for the validation of node
 
 #. given an input matrix, create the biadjacency matrix of the BiCM null model
 #. calculate the p-values of the observed similarities of nodes in the same bipartite layer
-  
+
 Subsequently, a multiple hypothesis testing of the p-values can be performed. The statistically validated node similarities give rise to a unbiased monopartite projection of the original bipartite network, as illustrated in [Saracco2016]_.
 
 For more detailed explanations of the methods, please refer to [Saracco2016]_, the :ref:`tutorial` and the :ref:`api`.
@@ -30,6 +30,14 @@ To create the biadjacency matrix of the BiCM, use::
 
     >>> cm.make_bicm()
 
+.. note::
+
+    The function ``make_bicm`` relies on the ``scipy.root`` routine, which uses a specified numerial solver to solve a system of equation. If the solver does not find a solution, on may run the function with ``method`` and ``initial_conditions`` arguments::
+
+        >>> cm.make_bicm(method=<method_name>, initial_conditions=<initial_guesses>)
+
+    For a list of possible solvers, see the `scipy.optimize.root documentation <https://docs.scipy.org/doc/ scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_.
+
 The biadjacency matrix of the BiCM null model can be saved in *<filename>*::
 
     >>> cm.save_biadjacency(filename=<filename>, delim='\t')
@@ -48,7 +56,7 @@ p-values of the observed numbers of shared neighbors (i.e. of the
 :math:`\Lambda`-motifs [Saracco2016]_) in *<filename>*, use::
 
     >>> cm.lambda_motifs(True, filename=<filename>)
-  
+
 By default, the file is saved as binary NumPy file to reduce disk space, and
 the format suffix ``.npy`` is appended. If the file should be saved in a
 human-readable ``.csv`` format, use::
@@ -59,12 +67,12 @@ Analogously for the **column-nodes**, use::
 
     >>> cm.lambda_motifs(False, filename=<filename>)
 
-or:: 
+or::
 
     >>> cm.lambda_motifs(False, filename=<filename>, delim='\t', binary=False)
 
 .. note::
-    
+
     The p-values are saved as a one-dimensional array with index :math:`k \in
     \left[0, \ldots, \binom{N}{2} - 1\right]` for a bipartite layer of
     :math:`N` nodes. Please check the section :ref:`output-format` for details

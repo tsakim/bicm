@@ -8,7 +8,7 @@ The tutorial will take you step by step from the biadjacency matrix of a real-da
 .. figure:: figures/nw.png
     :width: 25 %
     :align: center
-    
+
     Figure 1: Example network.
 
 The structure of the network can be captured in a `biadjacency matrix
@@ -37,7 +37,7 @@ Let's get started by importing the necessary modules::
 
 The biadjacency matrix of our toy network will be saved in the two-dimensional
 NumPy array ``mat``
- 
+
 .. code::
 
     >>> mat = np.array([[1, 1, 0, 0], [0, 1, 1, 1], [0, 1, 0, 1]])
@@ -64,9 +64,9 @@ In our example graph, the BiCM biadjacency matrix should be::
            [ 0.56845256,  0.99969684,  0.56845256,  0.86309703],
            [ 0.21602144,  0.99855239,  0.21602144,  0.56873952]])
 
-If necessary, we could now save the matrix in the file *<filename>* with 
+If necessary, we could now save the matrix in the file *<filename>* with
 
-.. code:: 
+.. code::
 
     >>> cm.save_biadjacency(filename=<filename>, delim='\t')
 
@@ -79,6 +79,14 @@ would run::
     >>> cm.save_biadjacency(filename=<filename>, binary=True)
 
 If ``binary == True``, the file ending ``.npy`` is appended automatically.
+
+.. note::
+
+    The function ``make_bicm`` relies on the ``scipy.root`` routine, which uses a specified numerial solver to solve a system of equation. If the solver does not find a solution, on may run the function with ``method`` and ``initial_conditions`` arguments::
+
+        >>> cm.make_bicm(method=<method_name>, initial_conditions=<initial_guesses>)
+
+    For a list of possible solvers, see the `scipy.optimize.root documentation <https://docs.scipy.org/doc/ scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_.
 
 P-values
 --------------------------------------------------------------------------------
@@ -121,7 +129,7 @@ appropriate name ending with ``.csv`` and use::
 Again the default delimiter is ``\t``.
 
 .. note::
-    
+
     The p-values are saved as a one-dimensional array with index :math:`k \in
     \left[0, \ldots, \binom{N}{2} - 1\right]` for a bipartite layer of
     :math:`N` nodes. Please check the section :ref:`output-format` for details

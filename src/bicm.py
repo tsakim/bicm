@@ -103,7 +103,7 @@ Usage:
 
             >>> cm.lambda_motifs(<bool>)
 
-Reference:
+References:
     [Saracco2015] F. Saracco, R. Di Clemente, A. Gabrielli, T. Squartini,
     Randomizing bipartite networks: the case of the World Trade Web, Scientific
     Reports 5, 10595 (2015)
@@ -172,21 +172,38 @@ class BiCM:
         assert dseq.size == (self.num_rows + self.num_columns)
         return dseq
 
-    def make_bicm(self):
+    def make_bicm(self, method=None, initial_conditions=None):
         """Create the biadjacency matrix of the BiCM null model.
 
         Solve the log-likelihood maximization problem to obtain the BiCM
         null model which respects constraints on the degree sequence of the
         input matrix.
 
+        .. note::
+
+            It can happen that the solver (``method``) used by ``scipy.root``
+            does not find a solution and a RuntimeError is raised.
+            In this case, please try another ``method`` or different initial
+            conditions and refer to the `scipy.optimize.root documentation
+            <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
+            scipy.optimize.root.html>`_.
+
+        :param  method: type of solver, default corresponds to ‘hybr’. For other
+            solvers, see the `scipy.optimize.root documentation
+            <https://docs.scipy.org/doc/
+            scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_.
+        :type method: str
+        :param initial_conditions: initial guesses for the solutions. If no
+            values are given, they are set to 0.5
+        :type initial_conditions: numpy.array
+
         :raise AssertionError: raise an error if the adjacency matrix of the
             null model has different dimensions than the input matrix
         """
-        # print "+++Generating bipartite configuration model..."
-        self.sol = self.solve_equations(self.equations, self.jacobian)
+        self.sol = self.solve_equations(self.equations, self.jacobian,
+                method=method, initial_conditions=initial_conditions)
         # biadjacency matrix:
         self.adj_matrix = self.get_biadjacency_matrix(self.sol.x)
-        # assert size of matrix
         assert self.adj_matrix.shape == self.bin_mat.shape, \
             "Biadjacency matrix has wrong dimensions."
         self.test_average_degrees()
@@ -195,24 +212,64 @@ class BiCM:
 # Solve coupled nonlinear equations and get BiCM biadjacency matrix
 # ------------------------------------------------------------------------------
 
-    def solve_equations(self, eq, jac):
+    def solve_equations(self, eq, jac, method=None, initial_conditions=None):
         """Solve the system of equations of the maximum log-likelihood problem.
 
-        The system of equations is solved using ``scipy``'s root function. The
-        solutions correspond to the Lagrange multipliers
+        The system of equations is solved using ``scipy``'s root function with
+        the solver defined in ``method``. The solutions correspond to the
+        Lagrange multipliers
 
         .. math::
 
             x_i = \exp(-\\theta_i).
 
+        .. note::
+
+            It can happen that the solver (``method``) used by ``scipy.root``
+            does not find a solution and a RuntimeError is raised.
+            In this case, please try another ``method`` or different initial
+            conditions and refer to the `scipy.optimize.root documentation
+            <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
+            scipy.optimize.root.html>`_.
+
         :param eq: system of equations (:math:`f(x) = 0`)
         :type eq: numpy.array
         :param jac: Jacobian of the system
         :type jac: numpy.ndarray
+        :param  method: type of solver, default corresponds to ‘hybr’. For other
+            solvers, see the `scipy.optimize.root documentation
+            <https://docs.scipy.org/doc/
+            scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_.
+        :type method: str
+        :param initial_conditions: initial guesses for the solutions. If no
+            values are given, they are set to 0.5
+        :type initial_conditions: numpy.array
         :returns: solution of the equation system
+        :rtype: scipy.optimize.OptimizeResult
+
+        :raise AssertionError: raise an error if not enough initial conditions
+            are provided
+        :raise RuntimeError: raise an error if the system has not been solved
         """
-        init_guess = 0.5 * np.ones(self.dim)
-        sol = opt.root(fun=eq, x0=init_guess, jac=jac)
+        if initial_conditions is None:
+            initial_conditions = 0.5 * np.ones(self.dim)
+        else:
+            assert len(initial_conditions) == self.dim, \
+                "One initial condition for each parameter is required."
+        if method is None:
+            sol = opt.root(fun=eq, x0=initial_conditions, jac=jac)
+        else:
+            sol = opt.root(fun=eq, x0=initial_conditions, jac=jac,
+                           method=method)
+        if not sol.success:
+            errmsg = "Scipy solver was not successful.\n" + \
+                     ("Status: %s\n" % str(sol.status)) + \
+                     ("Message: %s\n" % sol.message) + \
+                     "Try different initial conditions and/or a" + \
+                     "different solver, see documentation at " + \
+                     "https://docs.scipy.org/doc/scipy-0.19.0/reference/" + \
+                     "generated/scipy.optimize.root.html"
+            raise RuntimeError(errmsg)
         return sol
 
     def equations(self, xx):
@@ -282,11 +339,11 @@ class BiCM:
         # account for machine precision:
         mat += np.finfo(np.float).eps
         if np.any(mat < 0):
-            errmsg = 'Error in get_adjacency_block: probabilities < 0 in ' \
+            errmsg = 'Error in get_adjacency_matrix: probabilities < 0 in ' \
                   + str(np.where(mat < 0))
             raise ValueError(errmsg)
         elif np.any(mat > (1. + np.finfo(np.float).eps)):
-            errmsg = 'Error in get_adjacency_block: probabilities > 1 in' \
+            errmsg = 'Error in get_adjacency_matrix: probabilities > 1 in' \
                   + str(np.where(mat > 1))
             raise ValueError(errmsg)
         return mat
@@ -303,7 +360,7 @@ class BiCM:
         """
         ave_deg_columns = np.squeeze(np.sum(self.adj_matrix, axis=0))
         ave_deg_rows = np.squeeze(np.sum(self.adj_matrix, axis=1))
-        eps = 1./10  # error margin
+        eps = 1e-2  # error margin
         c_derr = np.where(np.logical_or(
             # average degree too small:
             ave_deg_rows + eps < self.dseq[:self.num_rows],
@@ -648,7 +705,7 @@ class BiCM:
 
         # add as many poison pills "STOP" to the queue as there are workers
         for i in xrange(nprocs):
-                self.input_queue.put("STOP")
+            self.input_queue.put("STOP")
 
     def pval_process_worker(self):
         """Calculate p-values and add them to the out-queue."""

@@ -8,3 +8,5 @@ docs/_static
 docs/_template
 *.ipynb
 src/notes_*
+src/*_old
+

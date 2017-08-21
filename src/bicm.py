@@ -172,104 +172,138 @@ class BiCM:
         assert dseq.size == (self.num_rows + self.num_columns)
         return dseq
 
-    def make_bicm(self, method=None, initial_conditions=None):
+    def make_bicm(self, x0=None, method='hybr', jac=None, tol=None, **kwargs):
         """Create the biadjacency matrix of the BiCM null model.
 
         Solve the log-likelihood maximization problem to obtain the BiCM
         null model which respects constraints on the degree sequence of the
         input matrix.
 
+        The problem is solved using ``scipy``'s root function with the solver
+        defined by ``method``. The status of the solver after running
+        ``scipy.root``and the difference between the network and BiCM degrees
+        are printed in the console.
+
+        The default solver is the modified Powell method ``hybr``. Least-squares
+        can be chosen with ``method='lm'`` for the Levenberg-Marquardt approach.
+
+        Depending on the solver, keyword arguments ``kwargs`` can be passed to
+        the solver. Please refer to the `scipy.optimize.root documentation
+        <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
+        scipy.optimize.root.html>`_ for detailed descriptions.
+
         .. note::
 
-            It can happen that the solver (``method``) used by ``scipy.root``
-            does not find a solution and a RuntimeError is raised.
+            It can happen that the solver ``method`` used by ``scipy.root``
+            does not converge to a solution.
             In this case, please try another ``method`` or different initial
             conditions and refer to the `scipy.optimize.root documentation
             <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
             scipy.optimize.root.html>`_.
 
-        :param  method: type of solver, default corresponds to ‘hybr’. For other
+        :param x0: initial guesses for the solutions.
+        :type x0: numpy.array, optional
+        :param method: type of solver, default is ‘hybr’. For other
             solvers, see the `scipy.optimize.root documentation
             <https://docs.scipy.org/doc/
             scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_.
-        :type method: str
-        :param initial_conditions: initial guesses for the solutions. If no
-            values are given, they are set to 0.5
-        :type initial_conditions: numpy.array
+        :type method: str, optional
+        :param jac: Jacobian of the system
+        :type jac: bool or callable, optional
+        :param tol: tolerance for termination. For detailed control, use
+            solver-specific options.
+        :type tol: float, optional
+        :param kwargs: solver-specific options, please refer to the SciPy
+            documentation
 
-        :raise AssertionError: raise an error if the adjacency matrix of the
-            null model has different dimensions than the input matrix
+        :raise ValueError: raise an error if not enough initial conditions
+            are provided
         """
-        self.sol = self.solve_equations(self.equations, self.jacobian,
-                method=method, initial_conditions=initial_conditions)
-        # biadjacency matrix:
+        self.sol = self.solve_equations(x0=x0, method=method, jac=jac, tol=tol,
+                                        **kwargs)
+        # create BiCM biadjacency matrix:
         self.adj_matrix = self.get_biadjacency_matrix(self.sol.x)
-        assert self.adj_matrix.shape == self.bin_mat.shape, \
-            "Biadjacency matrix has wrong dimensions."
-        self.test_average_degrees()
+        self.print_max_degree_differences()
+        # self.test_average_degrees()
 
 # ------------------------------------------------------------------------------
 # Solve coupled nonlinear equations and get BiCM biadjacency matrix
 # ------------------------------------------------------------------------------
 
-    def solve_equations(self, eq, jac, method=None, initial_conditions=None):
+    def solve_equations(self, x0=None, method='hybr', jac=None, tol=None,
+                        **kwargs):
         """Solve the system of equations of the maximum log-likelihood problem.
 
         The system of equations is solved using ``scipy``'s root function with
-        the solver defined in ``method``. The solutions correspond to the
+        the solver defined by ``method``. The solutions correspond to the
         Lagrange multipliers
 
         .. math::
 
             x_i = \exp(-\\theta_i).
 
+        Depending on the solver, keyword arguments ``kwargs`` can be passed to
+        the solver. Please refer to the `scipy.optimize.root documentation
+        <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
+        scipy.optimize.root.html>`_ for detailed descriptions.
+
+        The default solver is the modified Powell method ``hybr``. Least-squares
+        can be chosen with ``method='lm'`` for the Levenberg-Marquardt approach.
+
         .. note::
 
-            It can happen that the solver (``method``) used by ``scipy.root``
-            does not find a solution and a RuntimeError is raised.
+            It can happen that the solver ``method`` used by ``scipy.root``
+            does not converge to a solution.
             In this case, please try another ``method`` or different initial
             conditions and refer to the `scipy.optimize.root documentation
             <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
             scipy.optimize.root.html>`_.
 
-        :param eq: system of equations (:math:`f(x) = 0`)
-        :type eq: numpy.array
-        :param jac: Jacobian of the system
-        :type jac: numpy.ndarray
-        :param  method: type of solver, default corresponds to ‘hybr’. For other
+        :param x0: initial guesses for the solutions.
+        :type x0: numpy.array, optional
+        :param method: type of solver, default is ‘hybr’. For other
             solvers, see the `scipy.optimize.root documentation
             <https://docs.scipy.org/doc/
             scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_.
-        :type method: str
-        :param initial_conditions: initial guesses for the solutions. If no
-            values are given, they are set to 0.5
-        :type initial_conditions: numpy.array
+        :type method: str, optional
+        :param jac: Jacobian of the system
+        :type jac: bool or callable, optional
+        :param tol: tolerance for termination. For detailed control, use
+            solver-specific options.
+        :type tol: float, optional
+        :param kwargs: solver-specific options, please refer to the SciPy
+            documentation
         :returns: solution of the equation system
         :rtype: scipy.optimize.OptimizeResult
 
-        :raise AssertionError: raise an error if not enough initial conditions
+        :raise ValueError: raise an error if not enough initial conditions
             are provided
-        :raise RuntimeError: raise an error if the system has not been solved
         """
-        if initial_conditions is None:
-            initial_conditions = 0.5 * np.ones(self.dim)
+        # use Jacobian if the hybr solver is chosen
+        if method is 'hybr':
+            jac = self.jacobian
+
+        # set initial conditions
+        if x0 is None:
+            x0 = self.dseq / np.sqrt(np.sum(self.dseq))
         else:
-            assert len(initial_conditions) == self.dim, \
-                "One initial condition for each parameter is required."
-        if method is None:
-            sol = opt.root(fun=eq, x0=initial_conditions, jac=jac)
-        else:
-            sol = opt.root(fun=eq, x0=initial_conditions, jac=jac,
-                           method=method)
+            if not len(x0) == self.dim:
+                msg = "One initial condition for each parameter is required."
+                raise ValueError(msg)
+
+        # solve equation system
+        sol = opt.root(fun=self.equations, x0=x0, method=method, jac=jac,
+                       tol=tol, **kwargs)
+
+        # check whether system has been solved successfully
+        print "Solver successful:", sol.success
+        print sol.message
         if not sol.success:
-            errmsg = "Scipy solver was not successful.\n" + \
-                     ("Status: %s\n" % str(sol.status)) + \
-                     ("Message: %s\n" % sol.message) + \
-                     "Try different initial conditions and/or a" + \
+            errmsg = "Try different initial conditions and/or a" + \
                      "different solver, see documentation at " + \
                      "https://docs.scipy.org/doc/scipy-0.19.0/reference/" + \
                      "generated/scipy.optimize.root.html"
-            raise RuntimeError(errmsg)
+            print errmsg
         return sol
 
     def equations(self, xx):
@@ -346,11 +380,27 @@ class BiCM:
             errmsg = 'Error in get_adjacency_matrix: probabilities > 1 in' \
                   + str(np.where(mat > 1))
             raise ValueError(errmsg)
+        assert mat.shape == self.bin_mat.shape, \
+            "Biadjacency matrix has wrong dimensions."
         return mat
 
 # ------------------------------------------------------------------------------
 # Test correctness of results:
 # ------------------------------------------------------------------------------
+
+    def print_max_degree_differences(self):
+        """Print the maximal differences between input network and BiCM degrees.
+
+        Check that the degree sequence of the solved BiCM null model graph
+        corresponds to the degree sequence of the input graph.
+        """
+        ave_deg_columns =np.sum(self.adj_matrix, axis=0)
+        ave_deg_rows = np.sum(self.adj_matrix, axis=1)
+        print "Maximal degree differences between data and BiCM:"
+        print "Columns:", np.abs(np.max(
+            self.dseq[self.num_rows:] - ave_deg_columns))
+        print "Rows:", np.abs(np.max(
+            self.dseq[:self.num_rows] - ave_deg_rows))
 
     def test_average_degrees(self):
         """Test the constraints on the node degrees.

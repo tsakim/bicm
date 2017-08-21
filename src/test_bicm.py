@@ -15,7 +15,10 @@ Usage:
     To run the tests, execute
         $ pytest test_bicm.py
     in the command line. If you want to run the tests in verbose mode, use
-        $ pytest -v test_bicm.py
+        $ pytest test_bicm.py -v
+    or
+        $ pytest test_bicm.py -v  -r P
+    to capture the output of the SciPy solver.
 
 Note that bicm.py and test_bicm.py should be in the same directory.
 """
@@ -30,25 +33,59 @@ from bicm import BiCM
 
 # BiCM.make_bicm() -------------------------------------------------------------
 
+def test_tutorial_matrix():
+    """Test the matrix for the tutorial."""
+    mat = np.array([[1, 1, 0, 0], [0, 1, 1, 1], [0, 0, 0, 1]])
+    cm = BiCM(mat)
+    cm.make_bicm(method='hybr')
+    assert cm.test_average_degrees(eps=1e-12)
+    cm.make_bicm(method='lm', options={'maxiter': 2000})
+    assert cm.test_average_degrees(eps=1e-12)
+
+
 def test_make_bicm():
     """Test the correct BiCM biadjacency matrices are created."""
-    td = np.array([[1, 0], [1, 1], [1, 1]])
-    exp_adjmat = np.array([[ 1.,  0.], [ 1.,  1.], [ 1.,  1.]])
-    cm = BiCM(td)
-    cm.make_bicm()
-    assert np.all(np.abs(cm.adj_matrix - exp_adjmat) < 1e-12)
-
     td = np.array([[1, 0], [0, 1]])
-    exp_adjmat = np.array([[ 0.5,  0.5], [ 0.5,  0.5]])
+    exp_adjmat = np.array([[0.5, 0.5], [0.5, 0.5]])
     cm = BiCM(td)
     cm.make_bicm()
     assert np.all(np.abs(cm.adj_matrix - exp_adjmat) < 1e-12)
 
     td = np.array([[1, 1, 0, 0], [0, 0, 1, 1]])
-    exp_adjmat = np.array([[ 0.5,  0.5,  0.5,  0.5], [ 0.5,  0.5,  0.5,  0.5]])
+    exp_adjmat = np.array([[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]])
     cm = BiCM(td)
     cm.make_bicm()
+    assert np.all(np.abs(cm.adj_matrix - exp_adjmat) < 1e-12)
 
+
+def test_solver_convergence():
+    """Test different convergence of solvers.
+
+    In this example, using the standard solver options the algorithm converges
+    when least-squares 'lm' is used, whereas it does not when 'hybr' is applied.
+
+    Run
+
+    .. code::
+
+        $ pytest test_bicm.py -v  -r P
+
+    to see and compare the solver output.
+    """
+    td = np.array([[1, 0], [1, 1], [1, 1]])
+    cm = BiCM(td)
+
+    # 'hybr' does not converge:
+    cm.make_bicm(method='hybr')
+    assert not cm.sol.success
+
+    # 'lm' does converge:
+    cm.make_bicm(method='lm')
+    assert cm.sol.success
+
+    # degree differences are between 1e-7 and 1-7
+    assert np.all(np.abs(cm.adj_matrix - td) < 1e-7)
+    assert np.any(np.abs(cm.adj_matrix - td) > 1e-8)
 
 # BiCM.solve_equations ---------------------------------------------------------
 
@@ -77,11 +114,11 @@ def test_jacobian():
     """Test that the correct Jacobian expressions are returned."""
     # TODO check expression of Jacobian and precision - seems to be a bit small
     cm = BiCM(np.array([[1, 0, 1], [1, 1, 1]]))
-    exp_jac = np.array([[ 1.51,  0.  ,  0.09,  0.09,  0.09],
-                         [ 0.  ,  1.35,  0.17,  0.17,  0.15],
-                         [ 0.37,  0.34,  0.26,  0.  ,  0.  ],
-                         [ 0.45,  0.41,  0.  ,  0.26,  0.  ],
-                         [ 0.69,  0.59,  0.  ,  0.  ,  0.23]])
+    exp_jac = np.array([[1.51, 0., 0.09, 0.09, 0.09],
+                        [0., 1.35, 0.17, 0.17, 0.15],
+                        [0.37, 0.34, 0.26, 0., 0.],
+                        [0.45, 0.41, 0., 0.26, 0.],
+                        [0.69, 0.59, 0., 0., 0.23]])
     jac = cm.jacobian((np.array([0.1, 0.2, 0.4, 0.5, 0.8]))),
     assert np.all(np.abs(exp_jac - jac) < 1e-2)
 
@@ -91,8 +128,8 @@ def test_jacobian():
 def test_get_biadjacency_matrix():
     """Test that the correct biadjacency matrix is returned."""
     cm = BiCM(np.array([[1, 0, 1], [1, 1, 1]]))
-    exp_adj = np.array([[ 0.03846154,  0.04761905,  0.07407407],
-                        [ 0.07407407,  0.09090909,  0.13793103]])
+    exp_adj = np.array([[0.03846154, 0.04761905, 0.07407407],
+                        [0.07407407, 0.09090909, 0.13793103]])
     adj = cm.get_biadjacency_matrix((np.array([0.1, 0.2, 0.4, 0.5, 0.8])))
     assert np.all(np.abs(exp_adj - adj) < 1e-8)
 
@@ -136,10 +173,10 @@ def test_get_pvalues():
     plambm = np.array([[p, p, p], [p, p, p], [p, p, p]])
     nlambm = np.array([2, 1, 1])
     assert np.all(np.abs(cm.get_pvalues_q(plambm[0], nlambm, parallel=False,
-                                   k1=0, k2=3)
+                                          k1=0, k2=3)
                   - np.array([0.4, 0.865, 0.865])) < 1e-12)
 
-    # Check that seqential and parallel processing obtain the same results:
+    # Check that sequential and parallel processing obtain the same results:
     pv_seq = cm.get_pvalues_q(plambm[0], nlambm, parallel=False, k1=0, k2=3)
     pv_par = cm.get_pvalues_q(plambm[0], nlambm, parallel=True, k1=0, k2=3)
     assert np.all(pv_seq == pv_par)

@@ -120,7 +120,7 @@ import numpy as np
 from poibin.poibin import PoiBin
 
 
-class BiCM:
+class BiCM(object):
     """Bipartite Configuration Model for undirected binary bipartite networks.
 
     This class implements the Bipartite Configuration Model (BiCM), which can
@@ -172,7 +172,8 @@ class BiCM:
         assert dseq.size == (self.num_rows + self.num_columns)
         return dseq
 
-    def make_bicm(self, x0=None, method='hybr', jac=None, tol=None, **kwargs):
+    def make_bicm(self, x0=None, method='hybr', jac=None, tol=None,
+                  callback=None, options=None):
         """Create the biadjacency matrix of the BiCM null model.
 
         Solve the log-likelihood maximization problem to obtain the BiCM
@@ -213,6 +214,13 @@ class BiCM:
         :param tol: tolerance for termination. For detailed control, use
             solver-specific options.
         :type tol: float, optional
+        :param callback: optional callback function to be called at
+            every iteration as ``callback(self.equations, x)``,
+            see ``scipy.root`` documentation
+        :type callback: function, optional
+        :param options: a dictionary of solver options, e.g. ``xtol`` or
+            ``maxiter``, see scipy.root documentation
+        :type options: dict, optional
         :param kwargs: solver-specific options, please refer to the SciPy
             documentation
 
@@ -220,18 +228,19 @@ class BiCM:
             are provided
         """
         self.sol = self.solve_equations(x0=x0, method=method, jac=jac, tol=tol,
-                                        **kwargs)
+                                        callback=callback, options=options)
         # create BiCM biadjacency matrix:
         self.adj_matrix = self.get_biadjacency_matrix(self.sol.x)
         self.print_max_degree_differences()
-        # self.test_average_degrees()
+        # assert self.test_average_degrees(eps=1e-2)
 
 # ------------------------------------------------------------------------------
 # Solve coupled nonlinear equations and get BiCM biadjacency matrix
 # ------------------------------------------------------------------------------
 
     def solve_equations(self, x0=None, method='hybr', jac=None, tol=None,
-                        **kwargs):
+                        callback=None, options=None):
+
         """Solve the system of equations of the maximum log-likelihood problem.
 
         The system of equations is solved using ``scipy``'s root function with
@@ -271,6 +280,13 @@ class BiCM:
         :param tol: tolerance for termination. For detailed control, use
             solver-specific options.
         :type tol: float, optional
+        :param callback: optional callback function to be called at
+            every iteration as ``callback(self.equations, x)``,
+            see ``scipy.root`` documentation
+        :type callback: function, optional
+        :param options: a dictionary of solver options, e.g. ``xtol`` or
+            ``maxiter``, see scipy.root documentation
+        :type options: dict, optional
         :param kwargs: solver-specific options, please refer to the SciPy
             documentation
         :returns: solution of the equation system
@@ -293,7 +309,7 @@ class BiCM:
 
         # solve equation system
         sol = opt.root(fun=self.equations, x0=x0, method=method, jac=jac,
-                       tol=tol, **kwargs)
+                       tol=tol, options=options, callback=callback)
 
         # check whether system has been solved successfully
         print "Solver successful:", sol.success
@@ -402,15 +418,18 @@ class BiCM:
         print "Rows:", np.abs(np.max(
             self.dseq[:self.num_rows] - ave_deg_rows))
 
-    def test_average_degrees(self):
+    def test_average_degrees(self, eps=1e-2):
         """Test the constraints on the node degrees.
 
         Check that the degree sequence of the solved BiCM null model graph
         corresponds to the degree sequence of the input graph.
+
+        :param eps: maximum difference between degrees of the real network
+            and the BiCM
+        :type eps: float
         """
         ave_deg_columns = np.squeeze(np.sum(self.adj_matrix, axis=0))
         ave_deg_rows = np.squeeze(np.sum(self.adj_matrix, axis=1))
-        eps = 1e-2  # error margin
         c_derr = np.where(np.logical_or(
             # average degree too small:
             ave_deg_rows + eps < self.dseq[:self.num_rows],
@@ -425,6 +444,7 @@ class BiCM:
             for i in c_derr[0]:
                 print 'Row-node ', i, ':',
                 print 'input:', self.dseq[i], 'average:', ave_deg_rows[i]
+            return False
         # Check column-nodes degrees:
         if not np.array_equiv(p_derr, np.array([])):
             print '...inaccurate column-nodes degrees:'
@@ -432,6 +452,8 @@ class BiCM:
                 print 'Column-node ', i, ':',
                 print 'input:', self.dseq[i + self.num_rows], \
                     'average:', ave_deg_columns[i]
+            return False
+        return True
 
 # ------------------------------------------------------------------------------
 # Lambda motifs
@@ -890,7 +912,7 @@ class BiCM:
         # column index of array index k in the the upper triangular part of the
         # square matrix
         c = k + 1 + r * (3 - 2 * n + r) / 2
-        return (r, c)
+        return r, c
 
     def save_biadjacency(self, filename, delim='\t', binary=False):
         """Save the biadjacendy matrix of the BiCM null model.

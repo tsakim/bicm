@@ -18,7 +18,7 @@ Description:
     The matrix entries correspond to the link probabilities :math:`<G>^*_{rc} =
     p_{rc}` between nodes of the two distinct bipartite node sets.
     Subsequently, one can calculate the p-values of the node similarities for
-    nodes in the same bipartite layer [Saracco2016]_.
+    nodes in the same bipartite layer [Saracco2017]_.
 
 Usage:
     Be ``mat`` a two-dimensional binary NumPy array. The nodes of the two
@@ -34,6 +34,28 @@ Usage:
     To create the biadjacency matrix of the BiCM, use::
 
         >>> cm.make_bicm()
+
+    .. note::
+
+        Note that ``make_bicm`` outputs a *status message* in the console, which
+        informs the user whether the underlying numerical solver has converged
+        to a solution.
+        The function is based on the ``scipy.optimize.root`` routine of the
+        `SciPy package <http://scipy.org>`_ to solve a log-likelihood
+        maximization problem and uses thus the same arguments (except for
+        *fun* and *args*, which are specified in our problem).
+
+        This means that the user has full control over the selection of a
+        solver, the initial conditions, tolerance, etc.
+
+        As a matter of fact, it may happen that the default function call
+        ``make_bicm()`` results in an unsuccessful solver, which requires
+        adjusting the function arguments.
+        In this case, please refer the description of the functions
+        :func:`BiCM.make_bicm` and :func:`BiCM.solve_equations`, and the
+        `scipy.optimize.root documentation
+        <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
+        scipy.optimize.root.html>`_.
 
     The biadjacency matrix of the BiCM null model can be saved in *<filename>*::
 
@@ -51,7 +73,7 @@ Usage:
 
     In order to analyze the similarity of the **row-nodes** and to save
     the p-values of the corresponding :math:`\\Lambda`-motifs (i.e. of the
-    number of shared neighbors [Saracco2016]_), use::
+    number of shared neighbors [Saracco2017]_), use::
 
         >>> cm.lambda_motifs(True, filename=<filename>)
 
@@ -83,7 +105,7 @@ Usage:
 
     Subsequently, the p-values can be used to perform a multiple hypotheses
     testing of the node similarities and to obtain statistically validated
-    monopartite projections [Saracco2016]_. The p-values are calculated in
+    monopartite projections [Saracco2017]_. The p-values are calculated in
     parallel by default, see :ref:`parallel` for details.
 
     .. note::
@@ -104,13 +126,17 @@ Usage:
             >>> cm.lambda_motifs(<bool>)
 
 References:
-    [Saracco2015] F. Saracco, R. Di Clemente, A. Gabrielli, T. Squartini,
-    Randomizing bipartite networks: the case of the World Trade Web, Scientific
-    Reports 5, 10595 (2015)
 
-    [Saracco2016] F. Saracco, M. J. Straka, R. Di Clemente, A. Gabrielli, G.
-    Caldarelli, T. Squartini, Inferring monopartite projections of bipartite
-    networks: an entropy-based approach, arXiv preprint arXiv:1607.02481
+.. [Saracco2015] `F. Saracco, R. Di Clemente, A. Gabrielli, T. Squartini,
+    Randomizing bipartite networks: the case of the World Trade Web,
+    Scientific Reports 5, 10595 (2015)
+    <http://www.nature.com/articles/srep10595>`_
+
+.. [Saracco2017] `F. Saracco, M. J. Straka, R. Di Clemente, A. Gabrielli,
+    G. Caldarelli, and T. Squartini,
+    Inferring monopartite projections of bipartite networks: an entropy-based
+    approach, New J. Phys. 19, 053022 (2017)
+    <http://stacks.iop.org/1367-2630/19/i=5/a=053022>`_
 """
 
 import ctypes
@@ -231,7 +257,7 @@ class BiCM(object):
                                         callback=callback, options=options)
         # create BiCM biadjacency matrix:
         self.adj_matrix = self.get_biadjacency_matrix(self.sol.x)
-        self.print_max_degree_differences()
+        # self.print_max_degree_differences()
         # assert self.test_average_degrees(eps=1e-2)
 
 # ------------------------------------------------------------------------------

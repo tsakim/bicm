@@ -45,5 +45,5 @@ Dependencies
 * `numpy <http://www.numpy.org>`_
 * `multiprocessing <https://docs.python.org/2/library/multiprocessing.html>`_
 * `ctypes <https://docs.python.org/2/library/ctypes.html>`_
-* `doctest <https://docs.python.org/2/library/doctest.html>`_ For unit testing
+* `pytest <https://docs.pytest.org/en/latest/contents.html>`_ for unit testing
 

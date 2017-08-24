@@ -228,8 +228,10 @@ class BiCM(object):
             <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
             scipy.optimize.root.html>`_.
 
-        :param x0: initial guesses for the solutions.
-        :type x0: numpy.array, optional
+        :param x0: initial guesses for the solutions. The first entries are the
+            initial guesses for the row-nodes, followed by the initial guesses
+            for the column-nodes.
+        :type x0: 1d numpy.array, optional
         :param method: type of solver, default is ‘hybr’. For other
             solvers, see the `scipy.optimize.root documentation
             <https://docs.scipy.org/doc/
@@ -294,8 +296,10 @@ class BiCM(object):
             <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/
             scipy.optimize.root.html>`_.
 
-        :param x0: initial guesses for the solutions.
-        :type x0: numpy.array, optional
+        :param x0: initial guesses for the solutions. The first entries are the
+            initial guesses for the row-nodes, followed by the initial guesses
+            for the column-nodes.
+        :type x0: 1d numpy.array, optional
         :param method: type of solver, default is ‘hybr’. For other
             solvers, see the `scipy.optimize.root documentation
             <https://docs.scipy.org/doc/

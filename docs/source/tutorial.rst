@@ -82,11 +82,11 @@ We can check the maximal degree difference between the input network and the BiC
 
     The function ``make_bicm`` uses the ``scipy.optimize.root`` routine of the `SciPy package <http://scipy.org>`_ to solve the maximization problem. It accepts the same arguments as ``scipy.optimize.root`` except for *fun* and *args*, which are specified in our problem. This means that the user has full control over the selection of a solver, the initial conditions, tolerance, etc.
 
-    As matter of fact, in some situations it may happen that the function call ``make_bicm()``, which uses default arguments, does not converge to a solution. In that case, the console will report *Solver successful: False* together with the status message returned by the numerical solver.
+    As a matter of fact, in some situations it may happen that the function call ``make_bicm()``, which uses default arguments, does not converge to a solution. In that case, the console will report *Solver successful: False* together with the status message returned by the numerical solver.
 
     If this happens, the user should try different solvers, such as `least-squares <https://docs.scipy.org/doc/scipy-0.19.0/reference/optimize.root-lm.html#optimize-root-lm>`_ and/or different initial conditions or tolerance values.
 
-    Please consult the `scipy.optimize.root documentation <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_ with a list of possible solvers and the description of function ``make_bicm`` in the :ref:`api`.
+    Please consult the `scipy.optimize.root documentation <https://docs.scipy.org/doc/scipy-0.19.0/reference/generated/scipy.optimize.root.html>`_ with a list of possible solvers and the description of the function ``make_bicm`` in the :ref:`api`.
 
 After having successfully obtained the biadjacency matrix, we could save it in the file *<filename>* with
 
